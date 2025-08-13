@@ -16,6 +16,12 @@ DO $$ BEGIN
     -- ignore if not permitted
     NULL;
   END;
+  BEGIN
+    EXECUTE 'CREATE EXTENSION IF NOT EXISTS pg_trgm';
+  EXCEPTION WHEN OTHERS THEN
+    -- ignore if not permitted
+    NULL;
+  END;
 END $$;
 
 -- Provide a fallback uuid_generate_v4() if uuid-ossp is unavailable
@@ -78,7 +84,24 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
-CREATE INDEX IF NOT EXISTS idx_products_title_trgm ON products USING GIN (title gin_trgm_ops);
+-- Create trigram index if pg_trgm is available; otherwise fallback to a simple index
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm')
+     OR EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_trgm') THEN
+    BEGIN
+      EXECUTE 'CREATE INDEX IF NOT EXISTS idx_products_title_trgm ON products USING GIN (title gin_trgm_ops)';
+    EXCEPTION WHEN OTHERS THEN
+      -- ignore if cannot create
+      NULL;
+    END;
+  ELSE
+    BEGIN
+      EXECUTE 'CREATE INDEX IF NOT EXISTS idx_products_title_btree ON products (title)';
+    EXCEPTION WHEN OTHERS THEN
+      NULL;
+    END;
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
