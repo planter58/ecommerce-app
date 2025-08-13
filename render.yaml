@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ecommerce-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        sync: false
+      - key: PG_SSL
+        value: true
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+    postdeploy: node src/scripts/migrate.js
