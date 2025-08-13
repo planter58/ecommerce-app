@@ -1,0 +1,11 @@
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Optional: cache node_modules for faster builds
+[build.processing]
+  skip_processing = true
