@@ -1,4 +1,5 @@
 import { query } from '../config/db.js';
+import { isCloudEnabled, uploadBuffer } from '../utils/cloudinary.js';
 
 function slugify(text) {
   return String(text || '')
@@ -90,7 +91,16 @@ export async function createMyProduct(req, res, next) {
       category_id = await ensureCategoryByName(category_name);
     }
     const files = (req.files && Array.isArray(req.files) && req.files.length) ? req.files : (req.file ? [req.file] : []);
-    const mainUrl = files[0] ? `/uploads/${files[0].filename}` : (req.body.image_url || null);
+    let uploadedUrls = [];
+    if (isCloudEnabled() && files.length && files[0].buffer) {
+      for (const f of files) {
+        const up = await uploadBuffer(f.buffer, { folder: 'ecommerce-app/products' });
+        uploadedUrls.push(up.secure_url);
+      }
+    }
+    const mainUrl = uploadedUrls[0]
+      ? uploadedUrls[0]
+      : (files[0] ? `/uploads/${files[0].filename}` : (req.body.image_url || null));
     if (!mainUrl) {
       return res.status(400).json({ message: 'At least one image is required.' });
     }
@@ -102,9 +112,15 @@ export async function createMyProduct(req, res, next) {
     const product = rows[0];
     // insert product_images for uploaded files (best-effort)
     try {
-      for (let idx = 0; idx < files.length; idx++) {
-        const f = files[idx];
-        await query('INSERT INTO product_images (product_id, url, position) VALUES ($1,$2,$3)', [product.id, `/uploads/${f.filename}`, idx]);
+      if (uploadedUrls.length) {
+        for (let idx = 0; idx < uploadedUrls.length; idx++) {
+          await query('INSERT INTO product_images (product_id, url, position) VALUES ($1,$2,$3)', [product.id, uploadedUrls[idx], idx]);
+        }
+      } else {
+        for (let idx = 0; idx < files.length; idx++) {
+          const f = files[idx];
+          await query('INSERT INTO product_images (product_id, url, position) VALUES ($1,$2,$3)', [product.id, `/uploads/${f.filename}`, idx]);
+        }
       }
     } catch (imgErr) {
       // If product_images table missing or other error, proceed with product created
@@ -126,7 +142,14 @@ export async function updateMyProduct(req, res, next) {
       category_id = await ensureCategoryByName(category_name);
     }
     const files = (req.files && Array.isArray(req.files) && req.files.length) ? req.files : (req.file ? [req.file] : []);
-    const image_url = files[0] ? `/uploads/${files[0].filename}` : req.body.image_url;
+    let uploadedUrls = [];
+    if (isCloudEnabled() && files.length && files[0].buffer) {
+      for (const f of files) {
+        const up = await uploadBuffer(f.buffer, { folder: 'ecommerce-app/products' });
+        uploadedUrls.push(up.secure_url);
+      }
+    }
+    const image_url = uploadedUrls[0] ? uploadedUrls[0] : (files[0] ? `/uploads/${files[0].filename}` : req.body.image_url);
     const { rows } = await query(
       `UPDATE products SET
          title=COALESCE($3,title), description=COALESCE($4,description),
@@ -168,13 +191,19 @@ export async function updateMyProduct(req, res, next) {
         }
       }
       // insert any new files appended
-      if (files.length) {
+      if (files.length || uploadedUrls.length) {
         // set next position to max existing + 1
         const { rows: maxPosRows } = await query('SELECT COALESCE(MAX(position), -1) AS maxpos FROM product_images WHERE product_id=$1', [product.id]);
         let pos = (maxPosRows[0]?.maxpos ?? -1) + 1;
-        for (let i = 0; i < files.length; i++) {
-          const f = files[i];
-          await query('INSERT INTO product_images (product_id, url, position) VALUES ($1,$2,$3)', [product.id, `/uploads/${f.filename}`, pos++]);
+        if (uploadedUrls.length) {
+          for (let i = 0; i < uploadedUrls.length; i++) {
+            await query('INSERT INTO product_images (product_id, url, position) VALUES ($1,$2,$3)', [product.id, uploadedUrls[i], pos++]);
+          }
+        } else {
+          for (let i = 0; i < files.length; i++) {
+            const f = files[i];
+            await query('INSERT INTO product_images (product_id, url, position) VALUES ($1,$2,$3)', [product.id, `/uploads/${f.filename}`, pos++]);
+          }
         }
       }
       // cover image handling via cover_image_id
