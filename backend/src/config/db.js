@@ -13,6 +13,19 @@ const pool = new Pool({
   ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
+// Optional debug: print DB connection info (non-sensitive) when diagnosing prod issues
+try {
+  const debug = process.env.DEBUG_AUTH === 'true';
+  if (debug && process.env.DATABASE_URL) {
+    const u = new URL(process.env.DATABASE_URL);
+    console.log('[db] connecting', {
+      host: u.hostname,
+      database: u.pathname.replace('/', ''),
+      ssl: process.env.PG_SSL === 'true' ? 'enabled' : 'disabled',
+    });
+  }
+} catch {}
+
 export const query = (text, params) => pool.query(text, params);
 
 export async function withTransaction(fn) {
