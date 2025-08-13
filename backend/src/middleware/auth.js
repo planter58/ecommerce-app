@@ -17,6 +17,19 @@ export async function authRequired(req, res, next) {
     req.user = { id: u.id, email: u.email, name: u.name, role: u.role, status: u.status };
     next();
   } catch (e) {
+    // Safe debug output to help diagnose 401s in production without leaking secrets
+    try {
+      const debug = process.env.DEBUG_AUTH === 'true';
+      if (debug) {
+        console.warn('[authRequired] JWT verify failed', {
+          path: req.path,
+          method: req.method,
+          origin: req.headers.origin,
+          error: e?.name || 'Error',
+          message: e?.message || 'verify failed',
+        });
+      }
+    } catch {}
     res.status(401).json({ message: 'Invalid token' });
   }
 }

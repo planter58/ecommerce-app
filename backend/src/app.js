@@ -23,8 +23,13 @@ const app = express();
 // Allow loading images from this server on different origins (e.g., Vite dev server)
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 // CORS: allow configured origin and common localhost/127.0.0.1 dev origins
+// Normalize CLIENT_ORIGIN to avoid trailing-slash mismatches
+const clientOriginRaw = process.env.CLIENT_ORIGIN || '';
+const clientOrigin = clientOriginRaw ? clientOriginRaw.replace(/\/+$/, '') : '';
 const allowedOrigins = new Set([
-  process.env.CLIENT_ORIGIN,
+  clientOrigin || undefined,
+  clientOrigin ? `${clientOrigin}/` : undefined,
+  process.env.CLIENT_ORIGIN, // keep original as-is just in case
   'http://localhost:5173',
   'http://127.0.0.1:5173'
 ].filter(Boolean));
