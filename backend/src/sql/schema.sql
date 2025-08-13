@@ -25,11 +25,11 @@ DO $$ BEGIN
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE p.proname = 'uuid_generate_v4'
   ) THEN
-    EXECUTE $$
-      CREATE OR REPLACE FUNCTION uuid_generate_v4() RETURNS uuid AS $$
+    EXECUTE $exec$
+      CREATE OR REPLACE FUNCTION uuid_generate_v4() RETURNS uuid AS $body$
         SELECT COALESCE(
           -- prefer pgcrypto if present
-          (SELECT gen_random_uuid() LIMIT 1),
+          (SELECT gen_random_uuid()),
           -- fallback: derive a UUID-like value; not cryptographically secure
           (
             SELECT (
@@ -41,8 +41,8 @@ DO $$ BEGIN
             )::uuid
           )
         );
-      $$ LANGUAGE sql VOLATILE;
-    $$;
+      $body$ LANGUAGE sql VOLATILE;
+    $exec$;
   END IF;
 END $$;
 
