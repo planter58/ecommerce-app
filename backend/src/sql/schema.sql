@@ -2,6 +2,50 @@
 --   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 --   CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+-- Attempt to enable extensions if permissions allow; ignore failures on free tiers
+DO $$ BEGIN
+  BEGIN
+    EXECUTE 'CREATE EXTENSION IF NOT EXISTS pgcrypto';
+  EXCEPTION WHEN OTHERS THEN
+    -- ignore if not permitted
+    NULL;
+  END;
+  BEGIN
+    EXECUTE 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"';
+  EXCEPTION WHEN OTHERS THEN
+    -- ignore if not permitted
+    NULL;
+  END;
+END $$;
+
+-- Provide a fallback uuid_generate_v4() if uuid-ossp is unavailable
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE p.proname = 'uuid_generate_v4'
+  ) THEN
+    EXECUTE $$
+      CREATE OR REPLACE FUNCTION uuid_generate_v4() RETURNS uuid AS $$
+        SELECT COALESCE(
+          -- prefer pgcrypto if present
+          (SELECT gen_random_uuid() LIMIT 1),
+          -- fallback: derive a UUID-like value; not cryptographically secure
+          (
+            SELECT (
+              substring(md5(random()::text || clock_timestamp()::text) from 1 for 8) || '-' ||
+              substring(md5(random()::text || clock_timestamp()::text) from 9 for 4) || '-' ||
+              substring(md5(random()::text || clock_timestamp()::text) from 13 for 4) || '-' ||
+              substring(md5(random()::text || clock_timestamp()::text) from 17 for 4) || '-' ||
+              substring(md5(random()::text || clock_timestamp()::text) from 21 for 12)
+            )::uuid
+          )
+        );
+      $$ LANGUAGE sql VOLATILE;
+    $$;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT UNIQUE NOT NULL,
