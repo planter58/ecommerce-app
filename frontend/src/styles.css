@@ -50,8 +50,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .mobile-only{display:none}
 
 /* Mobile topbar (Jumia-like) */
-.mobile-topbar{display:none;align-items:center;justify-content:space-between;gap:10px;padding:2px 0}
-.mobile-actions{display:flex;align-items:center;gap:12px}
+.mobile-topbar{display:none;align-items:center;gap:10px;padding:2px 0}
+.mobile-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
 .icon-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--ghost-bg);color:var(--text);text-decoration:none}
 .icon-btn:hover{background:color-mix(in oklab, var(--ghost-bg) 80%, #000 10%)}
 .icon-btn .badge.sm{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;font-size:.7rem}
@@ -184,11 +184,11 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 }
 
 /* Mobile bottom nav */
-.mobile-nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in oklab, var(--panel) 85%, #000 5%);border-top:1px solid rgba(0,0,0,.12);display:none;gap:4px;justify-content:space-around;align-items:center;padding:8px 10px;z-index:30}
+.mobile-nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in oklab, var(--panel) 85%, #000 5%);border-top:1px solid rgba(0,0,0,.12);display:none;gap:4px;justify-content:space-around;align-items:center;padding:6px 8px;z-index:30}
 .mobile-nav .item{appearance:none;background:none;border:none;color:var(--text);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 10px;border-radius:10px;position:relative}
 .mobile-nav .item:hover{background:var(--ghost-bg)}
-.mobile-nav .icon{font-size:18px}
-.mobile-nav .label{font-size:.8rem}
+.mobile-nav .icon{font-size:16px}
+.mobile-nav .label{font-size:.75rem}
 .mobile-nav .badge.sm{position:absolute;top:0;right:6px;transform:translateY(-30%);min-width:18px;height:18px;font-size:.7rem}
 @media (max-width:720px){
   .mobile-nav{display:flex}
