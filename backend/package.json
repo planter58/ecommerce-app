@@ -5,12 +5,13 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "db:init": "node -e \"import('./src/config/db.js').then(async m=>{await m.execSqlFile('sql/schema.sql'); await m.execSqlFile('sql/seed.sql'); console.log('DB initialized'); process.exit(0);})\""
+    "db:init": "node -e \"import('./src/config/db.js').then(async m=>{await m.execSqlFile('sql/schema.sql'); await m.execSqlFile('sql/seed.sql'); console.log('DB initialized'); process.exit(0);})\"",
+    "seed:catalog": "node src/scripts/seed_catalog.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
-    "cloudinary": "^1.41.0",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
