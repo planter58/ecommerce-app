@@ -10,6 +10,7 @@ if (process.env.AUTO_MIGRATE === 'true') {
     const files = [
       'sql/schema.sql',
       'sql/20250812_vendor.sql',
+      'sql/20250813_user_status.sql',
       'sql/20250813_vendor_status.sql',
       'sql/20250812_product_images.sql',
       'sql/20250813_was_admin.sql',
