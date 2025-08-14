@@ -6,7 +6,7 @@ import CategoryFilter from '../components/CategoryFilter';
 import SearchBar from '../components/SearchBar';
 
 export default function Home() {
-  const [params, setParams] = useState({ page: 1, limit: 40, q: '', category: '' });
+  const [params, setParams] = useState({ page: 1, limit: 80, q: '', category: '' });
   const [data, setData] = useState({ items: [], total: 0 });
 
   useEffect(() => { fetchProducts(params).then(setData); }, [params]);
