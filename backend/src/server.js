@@ -12,6 +12,8 @@ if (process.env.AUTO_MIGRATE === 'true') {
       'sql/20250812_vendor.sql',
       'sql/20250813_user_status.sql',
       'sql/20250813_vendor_status.sql',
+      'sql/20250813_compare_price.sql',
+      'sql/20250813_user_profile.sql',
       'sql/20250812_product_images.sql',
       'sql/20250813_was_admin.sql',
     ];
