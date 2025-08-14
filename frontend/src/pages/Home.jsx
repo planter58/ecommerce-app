@@ -9,12 +9,16 @@ export default function Home() {
   const [params, setParams] = useState({ page: 1, limit: 40, q: '', category: '' });
   const [data, setData] = useState({ items: [], total: 0 });
   const isFeaturedMode = !params.q && !params.category;
-  // Cache featured list and remaining pages to avoid refetching when navigating back
+  // Cache featured list, remaining pages, and combined page slices to avoid refetching
+  // and recomputation when navigating between pages. Also preserve stable identity
+  // to prevent unnecessary re-renders.
   const cacheRef = useRef({
     featured: null,
     featuredIds: [],
     remainingTotal: 0,
     remainingPages: new Map(), // key: page number, value: items[]
+    productById: new Map(),    // stable object identity map for products
+    combinedPages: new Map(),  // key: page number, value: items[] (featured-first)
   });
 
   useEffect(() => {
@@ -29,6 +33,8 @@ export default function Home() {
             featured = Array.isArray(fd.items) ? fd.items : [];
             cacheRef.current.featured = featured;
             cacheRef.current.featuredIds = featured.map(p => p.id);
+            // seed productById for stable identities
+            for (const p of featured) cacheRef.current.productById.set(p.id, p);
           }
           const featuredIds = cacheRef.current.featuredIds;
 
@@ -50,10 +56,15 @@ export default function Home() {
             remainingTotal = resp.total || 0;
             cacheRef.current.remainingPages.set(1, firstPage);
             cacheRef.current.remainingTotal = remainingTotal;
+            for (const p of firstPage) cacheRef.current.productById.set(p.id, p);
           }
           total = featured.length + remainingTotal;
 
-          if (page === 1) {
+          // Serve from combined cache if present
+          const combinedCached = cacheRef.current.combinedPages.get(page);
+          if (combinedCached) {
+            items = combinedCached;
+          } else if (page === 1) {
             // Page 1 starts with all featured, followed by remaining
             const restNeed = Math.max(0, limit - featured.length);
             let rest = firstPage || [];
@@ -64,10 +75,14 @@ export default function Home() {
                 const nextPage = await fetchProducts({ ...remainingParams, page: 2 });
                 page2 = nextPage.items || [];
                 cacheRef.current.remainingPages.set(2, page2);
+                for (const p of page2) cacheRef.current.productById.set(p.id, p);
               }
               rest = rest.concat(page2);
             }
-            items = featured.concat(rest.slice(0, restNeed));
+            const list = featured.concat(rest.slice(0, restNeed));
+            // remap to stable objects
+            items = list.map(p => cacheRef.current.productById.get(p.id) || p);
+            cacheRef.current.combinedPages.set(1, items);
           } else {
             // Subsequent pages show only remaining, offset by featured.length
             const remainingStart = startIndex - featured.length; // may be >= 0
@@ -85,12 +100,14 @@ export default function Home() {
                     const nextPage = await fetchProducts({ ...remainingParams, page: 2 });
                     page2 = nextPage.items || [];
                     cacheRef.current.remainingPages.set(2, page2);
+                    for (const p of page2) cacheRef.current.productById.set(p.id, p);
                   }
                   rest = rest.concat(page2);
                 }
-                items = featuredTail.concat(rest.slice(0, need));
+                const list = featuredTail.concat(rest.slice(0, need));
+                items = list.map(p => cacheRef.current.productById.get(p.id) || p);
               } else {
-                items = featuredTail;
+                items = featuredTail.map(p => cacheRef.current.productById.get(p.id) || p);
               }
             } else {
               // Fully in remaining range. Compute which remaining page(s) to request.
@@ -101,6 +118,7 @@ export default function Home() {
                 const pageA = await fetchProducts({ ...remainingParams, page: remainingPage });
                 pageAItems = pageA.items || [];
                 cacheRef.current.remainingPages.set(remainingPage, pageAItems);
+                for (const p of pageAItems) cacheRef.current.productById.set(p.id, p);
               }
               let pool = pageAItems;
               if (indexInPage + limit > pool.length) {
@@ -109,11 +127,14 @@ export default function Home() {
                   const pageB = await fetchProducts({ ...remainingParams, page: remainingPage + 1 });
                   pageBItems = pageB.items || [];
                   cacheRef.current.remainingPages.set(remainingPage + 1, pageBItems);
+                  for (const p of pageBItems) cacheRef.current.productById.set(p.id, p);
                 }
                 pool = pool.concat(pageBItems);
               }
-              items = pool.slice(indexInPage, indexInPage + limit);
+              const slice = pool.slice(indexInPage, indexInPage + limit);
+              items = slice.map(p => cacheRef.current.productById.get(p.id) || p);
             }
+            cacheRef.current.combinedPages.set(page, items);
           }
 
           if (isMounted) setData(prev => {
