@@ -40,14 +40,25 @@ export async function getFeaturedProducts(_req, res, next) {
 
 export async function suggestFeaturedProducts(_req, res, next) {
   try {
-    // Earliest created products as a simple suggestion set (limit 30)
+    const q = (_req.query.q || '').trim();
+    const page = Math.max(parseInt(_req.query.page || '1', 10), 1);
+    const limit = Math.min(Math.max(parseInt(_req.query.limit || '50', 10), 1), 100);
+    const offset = (page - 1) * limit;
+    const params = [];
+    const where = [];
+    let i = 1;
+    if (q) { where.push(`(p.title ILIKE $${i} OR p.description ILIKE $${i})`); params.push(`%${q}%`); i++; }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const { rows: countRows } = await query(`SELECT COUNT(*)::int AS count FROM products p ${whereSql}`, params);
     const { rows } = await query(
       `SELECT p.id, p.title, p.image_url
        FROM products p
-       ORDER BY p.created_at ASC
-       LIMIT 30`
+       ${whereSql}
+       ORDER BY p.created_at DESC
+       LIMIT ${limit} OFFSET ${offset}`,
+      params
     );
-    res.json(rows);
+    res.json({ items: rows, total: countRows[0]?.count || 0, page, limit });
   } catch (e) { next(e); }
 }
 
