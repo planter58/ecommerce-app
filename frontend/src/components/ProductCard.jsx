@@ -22,7 +22,6 @@ export default function ProductCard({ product }) {
           </div>
           <div className="meta" style={{ display:'flex', flexDirection:'column', gap:4 }}>
             {product.category_name && <span>{product.category_name}</span>}
-            {product.vendor_name && <span>By {product.vendor_name}</span>}
             {typeof product.stock === 'number' && <span>Stock: {product.stock}</span>}
             {typeof product.avg_rating !== 'undefined' && (
               <span>★ {Number(product.avg_rating).toFixed(1)} ({product.rating_count || 0})</span>
