@@ -8,18 +8,18 @@ export default function CategoryFilter({ onChange }) {
   // Only show curated set on mobile chips; robust matching (name or slug)
   const norm = (s) => String(s || '').trim().toLowerCase();
   const curated = [
-    { keys: ['electronics'], label: 'Electronics' },
-    { keys: ['clothing', 'clothings'], label: 'Clothings' },
-    { keys: ['kitchenware', 'kitchen', 'kitchen-ware'], label: 'Kitchenware' },
+    { patterns: ['electronic', 'electronics', 'gadgets'], label: 'Electronics' },
+    { patterns: ['clothing', 'cloth', 'clothings', 'clothes', 'apparel', 'fashion'], label: 'Clothings' },
+    { patterns: ['kitchenware', 'kitchen', 'kitchen-items', 'kitchen_items', 'kitchen & dining', 'kitchen-dining'], label: 'Kitchenware' },
   ];
-  const findCat = (keys) => categories.find(c => {
+  const findCat = (patterns) => categories.find(c => {
     const n = norm(c.name);
     const s = norm(c.slug);
-    return keys.includes(n) || keys.includes(s);
+    return patterns.some(p => n === p || s === p || n.includes(p) || s.includes(p));
   });
   const mobileCats = curated
-    .map(({ keys, label }) => {
-      const c = findCat(keys);
+    .map(({ patterns, label }) => {
+      const c = findCat(patterns);
       return c ? { ...c, __label: label } : null;
     })
     .filter(Boolean);

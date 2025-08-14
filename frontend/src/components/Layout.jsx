@@ -56,6 +56,16 @@ export default function Layout({ children }) {
     return () => { if (timer) clearInterval(timer); };
   }, [user]);
   const cartCount = items.reduce((a, b) => a + b.quantity, 0);
+  const displayName = (() => {
+    if (!user) return null;
+    const name = user.name && String(user.name).trim();
+    const email = user.email && String(user.email).trim();
+    // Heuristic: if name looks like a UUID, ignore it
+    const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (name && !uuidLike.test(name)) return name;
+    if (email) return email;
+    return 'User';
+  })();
   return (
     <div>
       <div className="header">
@@ -90,7 +100,7 @@ export default function Layout({ children }) {
             </label>
             {user ? (
               <>
-                <span className="pill small">Hi, {user.name || user.id}</span>
+                <span className="pill small">Hi, {displayName}</span>
                 <button className="button ghost" onClick={logout}>Logout</button>
               </>
             ) : (

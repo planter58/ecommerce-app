@@ -10,6 +10,47 @@ function slugify(text) {
     .replace(/-+/g, '-');
 }
 
+// ===== Featured products (homepage) =====
+export async function getFeaturedProducts(_req, res, next) {
+  try {
+    const sql = `
+      SELECT p.*, c.name AS category_name, c.slug AS category_slug,
+             v.business_name AS vendor_name,
+             COALESCE(ROUND(AVG(r.rating)::numeric, 2), 0) AS avg_rating,
+             COUNT(r.id)::int AS rating_count,
+             COALESCE(
+               (
+                 SELECT json_agg(json_build_object('id', pi.id, 'url', pi.url, 'position', pi.position) ORDER BY pi.position ASC)
+                 FROM product_images pi WHERE pi.product_id = p.id
+               ), '[]'::json
+             ) AS images,
+             fp.position
+      FROM featured_products fp
+      JOIN products p ON p.id = fp.product_id
+      LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN vendors v ON v.id = p.vendor_id
+      LEFT JOIN reviews r ON r.product_id = p.id
+      GROUP BY p.id, c.name, c.slug, v.business_name, fp.position
+      ORDER BY fp.position ASC`;
+    const { rows } = await query(sql);
+    // Strict: only return curated featured items; if none saved, return empty list
+    return res.json({ items: rows, total: rows.length });
+  } catch (e) { next(e); }
+}
+
+export async function suggestFeaturedProducts(_req, res, next) {
+  try {
+    // Earliest created products as a simple suggestion set (limit 30)
+    const { rows } = await query(
+      `SELECT p.id, p.title, p.image_url
+       FROM products p
+       ORDER BY p.created_at ASC
+       LIMIT 30`
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+}
+
 async function ensureCategoryByName(name) {
   const trimmed = String(name || '').trim();
   if (!trimmed) return null;

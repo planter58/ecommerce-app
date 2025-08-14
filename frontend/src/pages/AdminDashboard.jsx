@@ -34,7 +34,7 @@ export default function AdminDashboard() {
 
   const load = async () => {
     const [prod, { data: cats }] = await Promise.all([
-      api.get('/products', { params: { q: productQuery || undefined, vendor_id: productVendorId || undefined } }).then(r => r.data),
+      api.get('/products', { params: { q: productQuery || undefined, vendor_id: productVendorId || undefined, limit: 500, page: 1 } }).then(r => r.data),
       api.get('/categories')
     ]);
     setProducts(prod.items);

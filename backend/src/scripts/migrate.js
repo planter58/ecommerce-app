@@ -12,6 +12,7 @@ async function run() {
       path.join('sql', '20250813_user_profile.sql'),
       path.join('sql', '20250812_product_images.sql'),
       path.join('sql', '20250813_was_admin.sql'),
+      path.join('sql', '20250814_featured_products.sql'),
     ];
     for (const f of files) {
       console.log('Applying', f);

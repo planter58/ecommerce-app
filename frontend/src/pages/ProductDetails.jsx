@@ -112,8 +112,8 @@ export default function ProductDetails() {
           </div>
         </div>
         {similar.length > 0 && (
-          <div className="mt-24">
-            <h4 style={{ margin: '16px 0 8px 0' }}>Similar Products</h4>
+          <div className="mt-24" style={{ background: 'var(--panel-bg, #f7f8fb)', padding: 16, borderRadius: 10, border: '1px solid rgba(0,0,0,0.06)', borderTop: '2px solid rgba(0,0,0,0.12)', marginTop: 24 }}>
+            <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
             <div className="products-grid" style={{ gap:12 }}>
               {similar.map(sp => (
                 <Link key={sp.id} to={`/product/${sp.id}`} className="card link" style={{ textDecoration:'none' }}>

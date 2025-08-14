@@ -49,5 +49,12 @@ export async function login(req, res, next) {
 }
 
 export async function me(req, res) {
-  res.json({ user: { id: req.user.id, role: req.user.role } });
+  try {
+    const { rows } = await query('SELECT id, email, name, role, status FROM users WHERE id=$1', [req.user.id]);
+    const user = rows[0];
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user });
+  } catch (e) {
+    res.status(500).json({ message: 'Failed to load profile' });
+  }
 }

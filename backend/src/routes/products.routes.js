@@ -7,6 +7,7 @@ import { upload } from '../middleware/upload.js';
 const r = Router();
 
 r.get('/', ctrl.listProducts);
+r.get('/featured', ctrl.getFeaturedProducts);
 r.get('/:id', ctrl.getProduct);
 
 r.post('/', authRequired, requireRole('admin'), upload.array('images', 8), ctrl.createProduct);

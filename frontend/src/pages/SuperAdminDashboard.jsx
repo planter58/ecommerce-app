@@ -17,11 +17,71 @@ export default function SuperAdminDashboard() {
   const [editAdmin, setEditAdmin] = useState({ name:'', phone:'', location:'', street_address:'', delivery_preference:'', bio:'', avatar_url:'' });
   const [selectedAdmins, setSelectedAdmins] = useState([]);
 
+  // Featured products state
+  const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
+  const [suggestions, setSuggestions] = useState([]); // [{id, title, image_url}]
+  const [saveMsg, setSaveMsg] = useState('');
+  const [saveErr, setSaveErr] = useState('');
+
   const loadAdmins = async () => {
     const { data } = await api.get('/admin/admins', { params: { q: adminQuery || undefined, status: adminStatus || undefined } });
     setAdmins(data);
   };
   useEffect(() => { loadAdmins(); }, [adminQuery, adminStatus]);
+
+  // Load featured and suggestions when tab opens
+  useEffect(() => {
+    if (tab !== 'featured') return;
+    (async () => {
+      try {
+        const [f, s] = await Promise.all([
+          api.get('/admin/featured'),
+          api.get('/admin/featured/suggest')
+        ]);
+        setFeatured(f.data || []);
+        setSuggestions(s.data || []);
+      } catch (e) {
+        // noop: UI will show empty state
+      }
+    })();
+  }, [tab]);
+
+  const moveUp = (idx) => {
+    if (idx <= 0) return;
+    setFeatured(list => {
+      const copy = [...list];
+      [copy[idx-1], copy[idx]] = [copy[idx], copy[idx-1]];
+      return copy.map((it, i) => ({ ...it, position: i+1 }));
+    });
+  };
+  const moveDown = (idx) => {
+    setFeatured(list => {
+      if (idx >= list.length - 1) return list;
+      const copy = [...list];
+      [copy[idx+1], copy[idx]] = [copy[idx], copy[idx+1]];
+      return copy.map((it, i) => ({ ...it, position: i+1 }));
+    });
+  };
+  const removeFeatured = (product_id) => {
+    setFeatured(list => list.filter(it => it.product_id !== product_id).map((it, i) => ({ ...it, position: i+1 })));
+  };
+  const addFeatured = (item) => {
+    setFeatured(list => {
+      if (list.find(x => x.product_id === item.id)) return list;
+      if (list.length >= 30) return list;
+      return [...list, { position: list.length + 1, product_id: item.id, title: item.title, image_url: item.image_url }];
+    });
+  };
+  const saveFeatured = async () => {
+    setSaveMsg(''); setSaveErr('');
+    try {
+      const items = featured.map(f => f.product_id);
+      await api.put('/admin/featured', { items });
+      setSaveMsg('Featured products saved');
+    } catch (e) {
+      setSaveErr(e?.response?.data?.message || 'Failed to save');
+    }
+  };
 
   const createAdmin = async (e) => {
     e.preventDefault();
@@ -59,6 +119,7 @@ export default function SuperAdminDashboard() {
       <h2>Super Admin</h2>
       <div className="tabs" style={{ display:'flex', gap:8, marginBottom:12 }}>
         <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
+        <button className={`button ${tab==='featured'?"":"ghost"}`} onClick={()=>setTab('featured')}>Featured</button>
       </div>
 
       {tab === 'admins' && (
@@ -155,6 +216,52 @@ export default function SuperAdminDashboard() {
                 )}
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'featured' && (
+        <section className="stack" style={{ gap:12 }}>
+          <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
+            <h3 style={{ margin:0 }}>Homepage Featured (1–30)</h3>
+            <div className="row" style={{ gap:8 }}>
+              <button className="button" onClick={saveFeatured}>Save</button>
+            </div>
+          </div>
+          {saveMsg && <div className="success" role="status">{saveMsg}</div>}
+          {saveErr && <div className="error" role="alert">{saveErr}</div>}
+
+          <div className="grid" style={{ gridTemplateColumns:'2fr 1fr', gap:12 }}>
+            <div className="card" style={{ padding:12 }}>
+              <h4 style={{ marginTop:0 }}>Current Order</h4>
+              {featured.length === 0 && <div className="small muted">No featured products yet.</div>}
+              <div className="stack" style={{ gap:8 }}>
+                {featured.map((f, idx) => (
+                  <div key={f.product_id} className="row" style={{ alignItems:'center', gap:8, border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:8 }}>
+                    <span className="pill">{idx+1}</span>
+                    {f.image_url && <img src={f.image_url} alt="thumb" style={{ width:40, height:40, objectFit:'cover', borderRadius:6 }} />}
+                    <div style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.title || f.product_id}</div>
+                    <div className="row" style={{ gap:6 }}>
+                      <button className="button ghost" onClick={()=>moveUp(idx)} disabled={idx===0}>Up</button>
+                      <button className="button ghost" onClick={()=>moveDown(idx)} disabled={idx===featured.length-1}>Down</button>
+                      <button className="button ghost" onClick={()=>removeFeatured(f.product_id)}>Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card" style={{ padding:12 }}>
+              <h4 style={{ marginTop:0 }}>Suggestions</h4>
+              <div className="stack" style={{ gap:8, maxHeight:420, overflowY:'auto' }}>
+                {suggestions.map(s => (
+                  <div key={s.id} className="row" style={{ alignItems:'center', gap:8 }}>
+                    {s.image_url && <img src={s.image_url} alt="s" style={{ width:40, height:40, objectFit:'cover', borderRadius:6 }} />}
+                    <div style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</div>
+                    <button className="button" disabled={!!featured.find(x=>x.product_id===s.id) || featured.length>=30} onClick={()=>addFeatured(s)}>Add</button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       )}
