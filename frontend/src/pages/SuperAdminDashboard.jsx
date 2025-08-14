@@ -53,7 +53,7 @@ export default function SuperAdminDashboard() {
         featuredCacheRef.current.featured = list;
         setFeatured(list);
       } catch {
-        setFeatured([]);
+        // keep previous featured on error
       }
     })();
   }, [tab]);
@@ -79,8 +79,7 @@ export default function SuperAdminDashboard() {
         setSuggestions(items);
         setSuggTotal(total);
       } catch {
-        setSuggestions([]);
-        setSuggTotal(0);
+        // keep previous suggestions on error
       }
     })();
   }, [tab, suggQuery, suggPage, suggLimit]);

@@ -72,8 +72,12 @@ export default function Home() {
               // fetch next page to fill
               let page2 = cacheRef.current.remainingPages.get(2);
               if (!page2) {
-                const nextPage = await fetchProducts({ ...remainingParams, page: 2 });
-                page2 = nextPage.items || [];
+                try {
+                  const nextPage = await fetchProducts({ ...remainingParams, page: 2 });
+                  page2 = nextPage.items || [];
+                } catch {
+                  page2 = [];
+                }
                 cacheRef.current.remainingPages.set(2, page2);
                 for (const p of page2) cacheRef.current.productById.set(p.id, p);
               }
@@ -97,8 +101,12 @@ export default function Home() {
                 if (need > rest.length) {
                   let page2 = cacheRef.current.remainingPages.get(2);
                   if (!page2) {
-                    const nextPage = await fetchProducts({ ...remainingParams, page: 2 });
-                    page2 = nextPage.items || [];
+                    try {
+                      const nextPage = await fetchProducts({ ...remainingParams, page: 2 });
+                      page2 = nextPage.items || [];
+                    } catch {
+                      page2 = [];
+                    }
                     cacheRef.current.remainingPages.set(2, page2);
                     for (const p of page2) cacheRef.current.productById.set(p.id, p);
                   }
@@ -115,8 +123,12 @@ export default function Home() {
               const indexInPage = remainingStart % limit;
               let pageAItems = cacheRef.current.remainingPages.get(remainingPage);
               if (!pageAItems) {
-                const pageA = await fetchProducts({ ...remainingParams, page: remainingPage });
-                pageAItems = pageA.items || [];
+                try {
+                  const pageA = await fetchProducts({ ...remainingParams, page: remainingPage });
+                  pageAItems = pageA.items || [];
+                } catch {
+                  pageAItems = [];
+                }
                 cacheRef.current.remainingPages.set(remainingPage, pageAItems);
                 for (const p of pageAItems) cacheRef.current.productById.set(p.id, p);
               }
@@ -124,8 +136,12 @@ export default function Home() {
               if (indexInPage + limit > pool.length) {
                 let pageBItems = cacheRef.current.remainingPages.get(remainingPage + 1);
                 if (!pageBItems) {
-                  const pageB = await fetchProducts({ ...remainingParams, page: remainingPage + 1 });
-                  pageBItems = pageB.items || [];
+                  try {
+                    const pageB = await fetchProducts({ ...remainingParams, page: remainingPage + 1 });
+                    pageBItems = pageB.items || [];
+                  } catch {
+                    pageBItems = [];
+                  }
                   cacheRef.current.remainingPages.set(remainingPage + 1, pageBItems);
                   for (const p of pageBItems) cacheRef.current.productById.set(p.id, p);
                 }
@@ -142,7 +158,13 @@ export default function Home() {
             return same ? prev : { items, total };
           });
         } else {
-          const pd = await fetchProducts(params);
+          let pd;
+          try {
+            pd = await fetchProducts(params);
+          } catch {
+            // keep previous data on error
+            pd = { items: (data?.items||[]), total: (data?.total||0) };
+          }
           if (isMounted) setData(prev => {
             const items = pd.items || [];
             const total = pd.total || 0;
@@ -151,7 +173,7 @@ export default function Home() {
           });
         }
       } catch (e) {
-        if (isMounted) setData({ items: [], total: 0 });
+        // Keep previous data on transient errors to avoid empty flashes
       }
     })();
     return () => { isMounted = false; };
