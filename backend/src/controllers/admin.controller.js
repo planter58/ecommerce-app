@@ -13,52 +13,6 @@ export async function listVendors(req, res, next) {
       i += 3;
     }
 
-// ===== Super Admin: Featured Products (homepage order 1..30) =====
-export async function getFeaturedProductsAdmin(req, res, next) {
-  try {
-    // Return current featured mapping with basic product info
-    const { rows } = await query(
-      `SELECT fp.position, p.id AS product_id, p.title, p.image_url
-       FROM featured_products fp
-       JOIN products p ON p.id = fp.product_id
-       ORDER BY fp.position ASC`
-    );
-    res.json(rows);
-  } catch (e) { next(e); }
-}
-
-export async function setFeaturedProducts(req, res, next) {
-  try {
-    if (req.user.role !== 'super_admin') return res.status(403).json({ message: 'Forbidden' });
-    const { items } = req.body; // array of product_ids in desired order, length 1..30
-    if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
-      return res.status(400).json({ message: 'items must be an array of 1..30 product IDs' });
-    }
-    // Ensure all are unique
-    const unique = new Set(items.map(String));
-    if (unique.size !== items.length) return res.status(400).json({ message: 'Duplicate product IDs not allowed' });
-
-    // Validate products exist
-    const { rows: existing } = await query('SELECT id FROM products WHERE id = ANY($1::uuid[])', [items]);
-    if (existing.length !== items.length) return res.status(400).json({ message: 'One or more product IDs do not exist' });
-
-    // Replace featured list atomically
-    await query('BEGIN');
-    await query('DELETE FROM featured_products');
-    for (let i = 0; i < items.length; i++) {
-      await query(
-        'INSERT INTO featured_products (product_id, position, created_by) VALUES ($1,$2,$3)',
-        [items[i], i + 1, req.user.id]
-      );
-    }
-    await query('COMMIT');
-    res.json({ ok: true, count: items.length });
-  } catch (e) {
-    try { await query('ROLLBACK'); } catch {}
-    next(e);
-  }
-}
-
     if (status && ['pending','approved','suspended'].includes(status)) {
       params.push(status);
       whereParts.push(`v.status = $${i}`);
@@ -144,6 +98,51 @@ export async function pendingVendorCount(req, res, next) {
     const { rows } = await query("SELECT COUNT(*)::int AS count FROM vendors WHERE status='pending'");
     res.json({ count: rows[0]?.count || 0 });
   } catch (e) { next(e); }
+}
+
+// ===== Super Admin: Featured Products (homepage order 1..30) =====
+export async function getFeaturedProductsAdmin(req, res, next) {
+  try {
+    const { rows } = await query(
+      `SELECT fp.position, p.id AS product_id, p.title, p.image_url
+       FROM featured_products fp
+       JOIN products p ON p.id = fp.product_id
+       ORDER BY fp.position ASC`
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+}
+
+export async function setFeaturedProducts(req, res, next) {
+  try {
+    if (req.user.role !== 'super_admin') return res.status(403).json({ message: 'Forbidden' });
+    const { items } = req.body; // array of product_ids in desired order, length 1..30
+    if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
+      return res.status(400).json({ message: 'items must be an array of 1..30 product IDs' });
+    }
+    // Ensure all are unique
+    const unique = new Set(items.map(String));
+    if (unique.size !== items.length) return res.status(400).json({ message: 'Duplicate product IDs not allowed' });
+
+    // Validate products exist
+    const { rows: existing } = await query('SELECT id FROM products WHERE id = ANY($1::uuid[])', [items]);
+    if (existing.length !== items.length) return res.status(400).json({ message: 'One or more product IDs do not exist' });
+
+    // Replace featured list atomically
+    await query('BEGIN');
+    await query('DELETE FROM featured_products');
+    for (let i = 0; i < items.length; i++) {
+      await query(
+        'INSERT INTO featured_products (product_id, position, created_by) VALUES ($1,$2,$3)',
+        [items[i], i + 1, req.user.id]
+      );
+    }
+    await query('COMMIT');
+    res.json({ ok: true, count: items.length });
+  } catch (e) {
+    try { await query('ROLLBACK'); } catch {}
+    next(e);
+  }
 }
 
 // ===== Super Admin: Admins management =====
