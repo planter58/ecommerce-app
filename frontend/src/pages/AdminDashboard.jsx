@@ -254,9 +254,7 @@ export default function AdminDashboard() {
         {user?.role === 'super_admin' && (
           <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
         )}
-        {user?.role === 'super_admin' && (
-          <button className={`button ${tab==='featured'?"":"ghost"}`} onClick={()=>setTab('featured')}>Featured</button>
-        )}
+        {/* Featured tab removed for super_admin; use dedicated Super Admin dashboard */}
       </div>
       {tab === 'products' && (
       <>
