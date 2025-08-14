@@ -20,7 +20,8 @@
   --primary:#4f46e5;
   --primary-600:#4338ca;
   --danger:#dc2626;
-  --ghost-bg: rgba(0,0,0,.06);
+  /* lighter ghost background in light theme */
+  --ghost-bg: rgba(0,0,0,.03);
 }
 *{box-sizing:border-box}
 html,body,#root{height:100%}
@@ -92,7 +93,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 /* Category chips (mobile) */
 .category-select{margin:8px 0}
 .category-chips{display:none;gap:8px;overflow:auto;padding:4px 2px;margin:8px 0}
-.category-chips .chip{flex:0 0 auto;border:1px solid rgba(0,0,0,.08);background:var(--ghost-bg);color:var(--text);padding:8px 12px;border-radius:999px;cursor:pointer}
+.category-chips .chip{flex:0 0 auto;border:1px solid rgba(0,0,0,.08);background:var(--ghost-bg);color:var(--text);padding:6px 10px;border-radius:999px;cursor:pointer;font-size:.9rem;line-height:1}
 .category-chips .chip.active{background:var(--primary);color:white;border-color:transparent}
 
 /* Cart */
@@ -189,7 +190,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .badge{min-width:20px;height:20px;font-size:.75rem}
   /* Show chips, hide select on mobile */
   .category-select{display:none}
-  .category-chips{display:flex}
+  .category-chips{display:flex;flex-wrap:wrap}
+  .category-chips .chip{padding:5px 9px;font-size:.8rem}
   /* Add space for bottom nav */
   .mobile-topbar .brand{gap:8px}
   .mobile-topbar .brand .link{font-size:16px}
