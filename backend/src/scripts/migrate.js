@@ -6,6 +6,7 @@ async function run() {
     const files = [
       path.join('sql', 'schema.sql'),
       path.join('sql', '20250812_vendor.sql'),
+      path.join('sql', '20250813_user_status.sql'),
       path.join('sql', '20250813_vendor_status.sql'),
       path.join('sql', '20250812_product_images.sql'),
       path.join('sql', '20250813_was_admin.sql'),
