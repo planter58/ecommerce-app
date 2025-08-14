@@ -46,6 +46,21 @@ export default function Home() {
           let items = [];
           let total = 0;
 
+          // If page 1 and we don't yet have combined cache, pre-render featured immediately
+          if (page === 1) {
+            const combinedCached = cacheRef.current.combinedPages.get(1);
+            if (!combinedCached) {
+              const prelim = featured.map(p => cacheRef.current.productById.get(p.id) || p);
+              if (isMounted && prelim.length) {
+                setData(prev => {
+                  const same = prev.items.length === prelim.length && prev.items.every((x, i) => x.id === prelim[i].id);
+                  return same ? prev : { items: prelim, total: prelim.length };
+                });
+                cacheRef.current.combinedPages.set(1, prelim);
+              }
+            }
+          }
+
           // Count remaining total (via first call) and build page slice
           const remainingParams = { ...params, q: '', category: '', page: 1, exclude_ids: featuredIds.join(',') };
           let firstPage = cacheRef.current.remainingPages.get(1);
