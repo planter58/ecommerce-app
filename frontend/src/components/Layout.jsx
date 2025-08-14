@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { CartContext } from '../context/CartContext.jsx';
 import MobileNav from './MobileNav.jsx';
@@ -11,13 +11,31 @@ export default function Layout({ children }) {
   const { user, logout } = useContext(AuthContext);
   const { items } = useContext(CartContext);
   const { pathname } = useLocation();
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [hideMobileNav, setHideMobileNav] = useState(false);
+  const lastYRef = useRef(window.scrollY || 0);
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Hide/show mobile footer on scroll (down hides, up shows)
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || 0;
+      const goingDown = y > lastYRef.current + 4;
+      const goingUp = y < lastYRef.current - 4;
+      lastYRef.current = y;
+      if (window.innerWidth <= 720) {
+        if (goingDown) setHideMobileNav(true);
+        else if (goingUp) setHideMobileNav(false);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   useEffect(() => {
     let timer;
     const loadPending = async () => {
@@ -159,7 +177,7 @@ export default function Layout({ children }) {
 
       <main className="container" style={{ marginTop: 16 }}>{children}</main>
       {/* Mobile bottom navigation */}
-      <MobileNav />
+      <MobileNav hidden={hideMobileNav} />
     </div>
   );
 }

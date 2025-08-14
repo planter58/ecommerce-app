@@ -3,7 +3,7 @@ import { useContext } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
 import { AuthContext } from '../context/AuthContext.jsx';
 
-export default function MobileNav() {
+export default function MobileNav({ hidden = false }) {
   const { items } = useContext(CartContext);
   const { user, logout } = useContext(AuthContext);
   const cartCount = items.reduce((a, b) => a + b.quantity, 0);
@@ -15,7 +15,7 @@ export default function MobileNav() {
   };
 
   return (
-    <nav className="mobile-nav" aria-label="Primary">
+    <nav className={`mobile-nav ${hidden ? 'hidden' : ''}`} aria-label="Primary">
       <Link className="item" to="/">
         <span className="icon" aria-hidden>🏠</span>
         <span className="label">Home</span>
