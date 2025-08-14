@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { fetchProducts, fetchFeaturedProducts } from '../api/products';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
@@ -194,14 +194,28 @@ export default function Home() {
     return () => { isMounted = false; };
   }, [params, isFeaturedMode]);
 
+  // Always reset scroll to top when changing page, query, or category
+  useLayoutEffect(() => {
+    try {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    } catch {
+      // no-op
+    }
+  }, [params.page, params.q, params.category]);
+
+  // Fallback to cached combined slice to avoid blank flashes during fast transitions
+  const itemsToRender = (data.items && data.items.length)
+    ? data.items
+    : (isFeaturedMode && cacheRef.current.combinedPages.get(params.page)) || [];
+
   return (
     <div>
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
       <div className="grid">
-        {data.items.map(p => <ProductCard key={p.id} product={p} />)}
+        {itemsToRender.map(p => <ProductCard key={p.id} product={p} />)}
       </div>
-      {data.total > params.limit && (
+      {((data.total || 0) > params.limit) && (
         <Pagination page={params.page} total={data.total} limit={params.limit}
           onPageChange={(page)=>setParams(p=>({ ...p, page }))} />
       )}
