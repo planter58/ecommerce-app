@@ -6,12 +6,14 @@ export default function SearchBar({ onSearch }) {
   const [suggestions, setSuggestions] = useState([]);
   const [open, setOpen] = useState(false);
   const inputRef = useRef(null);
+  const rootRef = useRef(null);
   const timerRef = useRef(null);
 
   const submit = (e) => {
     e.preventDefault();
     onSearch?.(q.trim());
     setOpen(false);
+    setSuggestions([]);
   };
 
   // Fetch suggestions as user types (debounced)
@@ -42,14 +44,27 @@ export default function SearchBar({ onSearch }) {
     setQ(title);
     onSearch?.(title);
     setOpen(false);
+    setSuggestions([]);
   };
 
   const onKeyDown = (e) => {
     if (e.key === 'Escape') setOpen(false);
   };
 
+  // Close on click outside
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!rootRef.current) return;
+      if (!rootRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
+
   return (
-    <form onSubmit={submit} className="toolbar searchbar" style={{ position:'relative' }}>
+    <form ref={rootRef} onSubmit={submit} className="toolbar searchbar" style={{ position:'relative' }}>
       <span className="search-icon" aria-hidden>🔎</span>
       <input
         ref={inputRef}
