@@ -268,9 +268,9 @@ export default function VendorDashboard() {
           <div>
             <h3>My Products</h3>
             {products.length === 0 && <div className="small">No products yet.</div>}
-            <div className="products-grid" style={{ gap:12 }}>
-              {products.map(p => (
-                <div key={p.id} className="card" style={{ padding:12 }}>
+              <div className="products-grid" style={{ gap:12 }}>
+                {products.map(p => (
+                <div key={p.id} className={`card ${editingId===p.id ? 'editing' : ''}`} style={{ padding:12 }}>
                   <div className="product-item">
                     <img
                       src={toAbsoluteUrl((() => {

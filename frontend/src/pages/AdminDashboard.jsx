@@ -211,7 +211,7 @@ export default function AdminDashboard() {
         </div>
         <div className="products-grid" style={{ marginTop:12 }}>
         {products.map(p => (
-          <div key={p.id} className="card" style={{ padding:12 }}>
+          <div key={p.id} className={`card ${editing===p.id ? 'editing' : ''}`} style={{ padding:12 }}>
             <img src={toAbsoluteUrl(p.image_url || (p.images && p.images[0]?.url) || '')} alt={p.title} width={48} height={48} style={{ objectFit: 'cover', borderRadius: 6 }} />
             <div style={{ marginTop:8 }}>
               {editing === p.id ? (

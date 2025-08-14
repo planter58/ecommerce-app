@@ -7,8 +7,8 @@ import { useNavigate, Link } from 'react-router-dom';
 export default function Login() {
   const { login } = useContext(AuthContext);
   const { mergeGuestToServer } = useContext(CartContext);
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('Admin@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const navigate = useNavigate();
