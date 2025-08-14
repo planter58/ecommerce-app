@@ -103,8 +103,22 @@ export async function listProducts(req, res, next) {
     if (vendor_id) {
       where.push(`p.vendor_id = $${i}`); params.push(vendor_id); i++;
     }
-    if (exclude_id) {
-      where.push(`p.id <> $${i}`); params.push(exclude_id); i++;
+    // Backward-compat: single exclude_id
+    if (exclude_id) { where.push(`p.id <> $${i}`); params.push(exclude_id); i++; }
+
+    // New: exclude_ids (comma-separated or array) for excluding many IDs
+    let excludeIdsArray = [];
+    if (req.query.exclude_ids) {
+      if (Array.isArray(req.query.exclude_ids)) {
+        excludeIdsArray = req.query.exclude_ids;
+      } else if (typeof req.query.exclude_ids === 'string') {
+        excludeIdsArray = req.query.exclude_ids.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    if (excludeIdsArray.length > 0) {
+      where.push(`p.id <> ALL($${i}::uuid[])`);
+      params.push(excludeIdsArray);
+      i++;
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
