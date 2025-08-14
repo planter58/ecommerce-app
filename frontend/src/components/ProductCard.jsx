@@ -1,7 +1,8 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { toAbsoluteUrl } from '../utils/media';
 
-export default function ProductCard({ product }) {
+function ProductCard({ product }) {
   const cover = toAbsoluteUrl(product.image_url || (product.images && product.images[0]?.url) || '');
   const hasCompare = typeof product.compare_at_price_cents === 'number' && product.compare_at_price_cents > 0 && product.compare_at_price_cents > product.price_cents;
   const discountPct = hasCompare ? Math.round((1 - (product.price_cents / product.compare_at_price_cents)) * 100) : 0;
@@ -32,3 +33,14 @@ export default function ProductCard({ product }) {
     </div>
   );
 }
+
+const areEqual = (prev, next) => (
+  prev.product.id === next.product.id &&
+  prev.product.image_url === next.product.image_url &&
+  prev.product.cover_image_url === next.product.cover_image_url &&
+  prev.product.title === next.product.title &&
+  prev.product.price_cents === next.product.price_cents &&
+  prev.product.compare_at_price_cents === next.product.compare_at_price_cents
+);
+
+export default React.memo(ProductCard, areEqual);
