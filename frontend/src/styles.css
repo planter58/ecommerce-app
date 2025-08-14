@@ -50,7 +50,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .mobile-only{display:none}
 
 /* Mobile topbar (Jumia-like) */
-.mobile-topbar{display:none;align-items:center;gap:10px;padding:2px 0}
+.mobile-topbar{display:none;align-items:center;gap:10px;padding:4px 0}
 .mobile-actions{display:flex;align-items:center;gap:12px;margin-left:auto}
 .icon-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--ghost-bg);color:var(--text);text-decoration:none}
 .icon-btn:hover{background:color-mix(in oklab, var(--ghost-bg) 80%, #000 10%)}
@@ -171,7 +171,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 @media (max-width:720px){
   .container{padding:16px}
   .toolbar{flex-direction:column;align-items:stretch}
-  .header-inner{padding:6px 10px}
+  /* increase header height on phones */
+  .header-inner{padding:10px 12px}
   .button{padding:9px 12px}
   /* Force exactly two items per row on phones */
   .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -180,15 +181,15 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .category-select{display:none}
   .category-chips{display:flex}
   /* Add space for bottom nav */
-  .container{padding-bottom:84px}
+  .container{padding-bottom:54px}
 }
 
 /* Mobile bottom nav */
-.mobile-nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in oklab, var(--panel) 85%, #000 5%);border-top:1px solid rgba(0,0,0,.12);display:none;gap:4px;justify-content:space-around;align-items:center;padding:6px 8px;z-index:30}
+.mobile-nav{position:fixed;left:0;right:0;bottom:0;background:color-mix(in oklab, var(--panel) 85%, #000 5%);border-top:1px solid rgba(0,0,0,.12);display:none;gap:4px;justify-content:space-around;align-items:center;padding:5px 8px;z-index:30}
 .mobile-nav .item{appearance:none;background:none;border:none;color:var(--text);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 10px;border-radius:10px;position:relative}
 .mobile-nav .item:hover{background:var(--ghost-bg)}
-.mobile-nav .icon{font-size:16px}
-.mobile-nav .label{font-size:.75rem}
+.mobile-nav .icon{font-size:15px}
+.mobile-nav .label{font-size:.7rem}
 .mobile-nav .badge.sm{position:absolute;top:0;right:6px;transform:translateY(-30%);min-width:18px;height:18px;font-size:.7rem}
 @media (max-width:720px){
   .mobile-nav{display:flex}
@@ -196,6 +197,9 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .desktop-only{display:none}
   .mobile-only{display:block}
   .mobile-topbar{display:flex; justify-content:flex-start}
+  .mobile-topbar .hamburger{flex:0 0 auto}
+  .mobile-topbar .brand{flex:0 0 auto}
+  .mobile-actions{margin-left:auto}
   /* tighter paddings and show search under header */
   .mobile-search .toolbar{margin:4px 0 6px}
   /* keep search pill horizontal on mobile */
@@ -204,7 +208,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .searchbar .search-input{padding:5px 8px;font-size:.9rem}
   .searchbar .search-btn{padding:6px 10px;font-size:.85rem}
   /* make sticky header compact */
-  .header-inner{padding:6px 10px}
+  .header-inner{padding:10px 12px}
   .mobile-topbar .brand{gap:8px}
   .mobile-topbar .brand .link{font-size:16px}
   /* push action icons to the far right */

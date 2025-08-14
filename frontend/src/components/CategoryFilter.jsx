@@ -5,9 +5,24 @@ export default function CategoryFilter({ onChange }) {
   const [categories, setCategories] = useState([]);
   const [selected, setSelected] = useState('');
   useEffect(() => { api.get('/categories').then(r => setCategories(r.data)); }, []);
-  // Only show a curated set on mobile chips
-  const allowedNames = ['electronics', 'clothings', 'kitchenware'];
-  const mobileCats = categories.filter(c => allowedNames.includes(String(c.name || '').toLowerCase()));
+  // Only show curated set on mobile chips; robust matching (name or slug)
+  const norm = (s) => String(s || '').trim().toLowerCase();
+  const curated = [
+    { keys: ['electronics'], label: 'Electronics' },
+    { keys: ['clothing', 'clothings'], label: 'Clothings' },
+    { keys: ['kitchenware', 'kitchen', 'kitchen-ware'], label: 'Kitchenware' },
+  ];
+  const findCat = (keys) => categories.find(c => {
+    const n = norm(c.name);
+    const s = norm(c.slug);
+    return keys.includes(n) || keys.includes(s);
+  });
+  const mobileCats = curated
+    .map(({ keys, label }) => {
+      const c = findCat(keys);
+      return c ? { ...c, __label: label } : null;
+    })
+    .filter(Boolean);
   return (
     <div>
       {/* Desktop select */}
@@ -36,7 +51,7 @@ export default function CategoryFilter({ onChange }) {
             aria-selected={selected === c.slug}
             className={`chip ${selected === c.slug ? 'active' : ''}`}
             onClick={()=>{ setSelected(c.slug); onChange?.(c.slug); }}
-          >{c.name}</button>
+          >{c.__label || c.name}</button>
         ))}
       </div>
     </div>
