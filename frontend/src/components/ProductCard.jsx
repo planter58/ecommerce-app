@@ -10,7 +10,7 @@ export default function ProductCard({ product }) {
       <Link to={`/product/${product.id}`} className="link" style={{ textDecoration: 'none' }}>
         <div style={{ position:'relative' }}>
           {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700 }}>{discountPct}%</div>}
-          <img className="cover" src={cover} alt={product.title} />
+          <img className="cover" src={cover} alt={product.title} loading="lazy" decoding="async" width="400" height="300" />
         </div>
         <div className="body">
           <h4 className="title">{product.title}</h4>
