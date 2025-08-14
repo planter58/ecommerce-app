@@ -1,6 +1,7 @@
 {
   "name": "ecommerce-app",
   "private": true,
+  "type": "module",
   "workspaces": ["frontend", "backend"],
   "scripts": {
     "dev": "npm-run-all -p dev:*",
