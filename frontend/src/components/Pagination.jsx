@@ -4,7 +4,10 @@ export default function Pagination({ page, total, limit, onPageChange }) {
   const canNext = page < pages;
   const go = (next) => {
     const clamped = Math.min(pages, Math.max(1, next));
-    if (clamped !== page) onPageChange?.(clamped);
+    if (clamped !== page) {
+      try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
+      onPageChange?.(clamped);
+    }
   };
   return (
     <div className="pagination">
