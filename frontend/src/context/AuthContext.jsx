@@ -20,7 +20,16 @@ export default function AuthProvider({ children }) {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(u));
     setUser(u);
+    // Merge guest cart into the authenticated cart, then refresh
+    try { window.dispatchEvent(new Event('cart:merge')); } catch {}
+    try { window.dispatchEvent(new Event('cart:refresh')); } catch {}
   };
-  const logout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); setUser(null); };
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    // Clear any in-memory and guest cart to prevent carry-over to next account
+    try { window.dispatchEvent(new Event('cart:clear')); } catch {}
+  };
   return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>;
 }

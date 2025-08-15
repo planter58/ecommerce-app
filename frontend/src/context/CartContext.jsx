@@ -22,6 +22,25 @@ export default function CartProvider({ children }) {
   };
   useEffect(() => { refresh(); }, []);
 
+  // React to auth changes: login/logout triggers cart merge/refresh/clear
+  useEffect(() => {
+    const onRefresh = () => { refresh(); };
+    const onMerge = () => { mergeGuestToServer(); };
+    const onClear = () => { setItems([]); try { localStorage.removeItem('guest_cart'); } catch {} };
+    try {
+      window.addEventListener('cart:refresh', onRefresh);
+      window.addEventListener('cart:merge', onMerge);
+      window.addEventListener('cart:clear', onClear);
+    } catch {}
+    return () => {
+      try {
+        window.removeEventListener('cart:refresh', onRefresh);
+        window.removeEventListener('cart:merge', onMerge);
+        window.removeEventListener('cart:clear', onClear);
+      } catch {}
+    };
+  }, []);
+
   const addToCart = async (payload) => {
     if (token()) {
       await apiAdd(payload); await refresh();
