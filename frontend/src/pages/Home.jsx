@@ -4,7 +4,6 @@ import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
 import CategoryFilter from '../components/CategoryFilter';
 import SearchBar from '../components/SearchBar';
-import VirtualizedProductGrid from '../components/VirtualizedProductGrid';
 
 export default function Home() {
   const [params, setParams] = useState({ page: 1, limit: 40, q: '', category: '' });
@@ -213,7 +212,9 @@ export default function Home() {
     <div>
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
-      <VirtualizedProductGrid items={itemsToRender} resetToken={`${params.page}|${params.q}|${params.category}`} />
+      <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'content' }}>
+        {itemsToRender.map(p => <ProductCard key={p.id} product={p} />)}
+      </div>
       {((data.total || 0) > params.limit) && (
         <Pagination page={params.page} total={data.total} limit={params.limit}
           onPageChange={(page)=>setParams(p=>({ ...p, page }))} />
