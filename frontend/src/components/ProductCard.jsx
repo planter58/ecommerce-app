@@ -23,9 +23,13 @@ function ProductCard({ product, index = 0 }) {
             aspectRatio: '4 / 3', // enforce uniform frame like Jumia
           }}
         >
-          {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700 }}>{discountPct}%</div>}
+          {hasCompare && (
+            <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:3 }}>
+              {discountPct}%
+            </div>
+          )}
           {!loaded && (
-            <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(128,128,128,0.08)' }} />
+            <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(128,128,128,0.08)', zIndex:1 }} />
           )}
           <img
             className="cover"
@@ -42,8 +46,9 @@ function ProductCard({ product, index = 0 }) {
               inset:0,
               width:'100%',
               height:'100%',
-              objectFit:'contain',
+              objectFit:'cover',
               display:'block',
+              zIndex:2,
               opacity: loaded ? 1 : 0,
               transition:'opacity 180ms ease-out'
             }}
