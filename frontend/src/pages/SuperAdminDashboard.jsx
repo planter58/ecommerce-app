@@ -159,9 +159,9 @@ export default function SuperAdminDashboard() {
         {f.image_url && <img loading="lazy" decoding="async" src={f.image_url} alt="thumb" style={{ width:40, height:40, objectFit:'cover', borderRadius:6 }} />}
         <div style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.title || f.product_id}</div>
         <div className="row" style={{ gap:6 }}>
-          <button className="button ghost" onClick={()=>onUp(idx)} disabled={idx===0}>Up</button>
-          <button className="button ghost" onClick={()=>onDown(idx)} disabled={idx===featured.length-1}>Down</button>
-          <button className="button ghost" onClick={()=>onRemove(f.product_id)}>Remove</button>
+          <button type="button" className="button ghost" onClick={()=>onUp(idx)} disabled={idx===0}>Up</button>
+          <button type="button" className="button ghost" onClick={()=>onDown(idx)} disabled={idx===featured.length-1}>Down</button>
+          <button type="button" className="button ghost" onClick={()=>onRemove(f.product_id)}>Remove</button>
         </div>
       </div>
     );
@@ -172,7 +172,7 @@ export default function SuperAdminDashboard() {
       <div className="row" style={{ alignItems:'center', gap:8 }}>
         {s.image_url && <img loading="lazy" decoding="async" src={s.image_url} alt={s.title} style={{ width:40, height:40, objectFit:'cover', borderRadius:6 }} />}
         <div style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</div>
-        <button className="button" disabled={disabled} onClick={onSend}>Send</button>
+        <button type="button" className="button" disabled={disabled} onClick={onSend}>Send</button>
       </div>
     );
   });
@@ -212,8 +212,8 @@ export default function SuperAdminDashboard() {
     <div>
       <h2>Super Admin</h2>
       <div className="tabs" style={{ display:'flex', gap:8, marginBottom:12 }}>
-        <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
-        <button className={`button ${tab==='featured'?"":"ghost"}`} onClick={()=>setTab('featured')}>Featured</button>
+        <button type="button" className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
+        <button type="button" className={`button ${tab==='featured'?"":"ghost"}`} onClick={()=>setTab('featured')}>Featured</button>
       </div>
 
       {tab === 'admins' && (
@@ -319,7 +319,7 @@ export default function SuperAdminDashboard() {
           <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
             <h3 style={{ margin:0 }}>Homepage Featured (1–30)</h3>
             <div className="row" style={{ gap:8 }}>
-              <button className="button" onClick={saveFeatured} disabled={featured.length === 0}>Save</button>
+              <button type="button" className="button" onClick={saveFeatured} disabled={featured.length === 0}>Save</button>
             </div>
           </div>
           {saveMsg && <div className="success" role="status">{saveMsg}</div>}
