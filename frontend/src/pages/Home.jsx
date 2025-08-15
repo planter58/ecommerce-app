@@ -213,7 +213,7 @@ export default function Home() {
     <div>
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
-      <VirtualizedProductGrid items={itemsToRender} />
+      <VirtualizedProductGrid items={itemsToRender} resetToken={`${params.page}|${params.q}|${params.category}`} />
       {((data.total || 0) > params.limit) && (
         <Pagination page={params.page} total={data.total} limit={params.limit}
           onPageChange={(page)=>setParams(p=>({ ...p, page }))} />

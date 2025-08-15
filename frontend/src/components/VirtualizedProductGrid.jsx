@@ -4,8 +4,9 @@ import ProductCard from './ProductCard';
 
 // Virtualized grid that renders only visible product cards.
 // Note: Uses its own scroll container to avoid large DOM; keeps data/order intact.
-export default function VirtualizedProductGrid({ items, minCols = 2, maxCols = 5, gap = 12, rowHeight = 340 }) {
+export default function VirtualizedProductGrid({ items, minCols = 2, maxCols = 5, gap = 12, rowHeight = 340, resetToken }) {
   const containerRef = useRef(null);
+  const gridRef = useRef(null);
   const [dims, setDims] = useState({ width: 0, height: 600 });
 
   // Measure container width and viewport height
@@ -53,6 +54,15 @@ export default function VirtualizedProductGrid({ items, minCols = 2, maxCols = 5
     return Math.ceil((items?.length || 0) / columnCount);
   }, [items, columnCount]);
 
+  // Reset internal grid scroll when resetToken changes (e.g., page/search/category)
+  useEffect(() => {
+    if (gridRef.current) {
+      try {
+        gridRef.current.scrollToItem({ columnIndex: 0, rowIndex: 0, align: 'start' });
+      } catch {}
+    }
+  }, [resetToken]);
+
   const Cell = ({ columnIndex, rowIndex, style }) => {
     const index = rowIndex * columnCount + columnIndex;
     if (index >= (items?.length || 0)) return null;
@@ -74,6 +84,7 @@ export default function VirtualizedProductGrid({ items, minCols = 2, maxCols = 5
   return (
     <div ref={containerRef} style={{ width: '100%' }}>
       <Grid
+        ref={gridRef}
         columnCount={columnCount}
         columnWidth={columnWidth}
         height={dims.height}
