@@ -7,7 +7,8 @@ import SearchBar from '../components/SearchBar';
 
 export default function Home() {
   const [params, setParams] = useState({ page: 1, limit: 40, q: '', category: '' });
-  const [data, setData] = useState({ items: [], total: 0 });
+  // Keep track of which page the data was fetched for to avoid showing stale responses
+  const [data, setData] = useState({ items: [], total: 0, pageTag: 1 });
   const isFeaturedMode = !params.q && !params.category;
   // Cache featured list, remaining pages, and combined page slices to avoid refetching
   // and recomputation when navigating between pages. Also preserve stable identity
@@ -22,6 +23,8 @@ export default function Home() {
   });
 
   useEffect(() => {
+    const requestId = Date.now();
+    const pageAtStart = params.page;
     let isMounted = true;
     (async () => {
       try {
@@ -54,7 +57,7 @@ export default function Home() {
               if (isMounted && prelim.length) {
                 setData(prev => {
                   const same = prev.items.length === prelim.length && prev.items.every((x, i) => x.id === prelim[i].id);
-                  return same ? prev : { items: prelim, total: prelim.length };
+                  return same ? prev : { items: prelim, total: prelim.length, pageTag: 1 };
                 });
                 cacheRef.current.combinedPages.set(1, prelim);
               }
@@ -176,10 +179,12 @@ export default function Home() {
             cacheRef.current.combinedPages.set(page, items);
           }
 
-          if (isMounted) setData(prev => {
-            const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id);
-            return same ? prev : { items, total };
-          });
+          if (isMounted && pageAtStart === params.page && requestId) {
+            setData(prev => {
+              const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id) && prev.pageTag === pageAtStart;
+              return same ? prev : { items, total, pageTag: pageAtStart };
+            });
+          }
         } else {
           let pd;
           try {
@@ -188,12 +193,14 @@ export default function Home() {
             // keep previous data on error
             pd = { items: (data?.items||[]), total: (data?.total||0) };
           }
-          if (isMounted) setData(prev => {
-            const items = pd.items || [];
-            const total = pd.total || 0;
-            const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id);
-            return same ? prev : { items, total };
-          });
+          if (isMounted && pageAtStart === params.page && requestId) {
+            setData(prev => {
+              const items = pd.items || [];
+              const total = pd.total || 0;
+              const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id) && prev.pageTag === pageAtStart;
+              return same ? prev : { items, total, pageTag: pageAtStart };
+            });
+          }
         }
       } catch (e) {
         // Keep previous data on transient errors to avoid empty flashes
@@ -241,11 +248,11 @@ export default function Home() {
 
   // Fallback to cached combined slice to avoid blank flashes during fast transitions
   const itemsToRender = useMemo(() => {
-    const primary = (data.items && data.items.length) ? data.items : null;
-    if (primary) return primary;
+    // Only use freshly fetched data if it matches the current page; otherwise fall back to cache
+    if (data.items && data.items.length && data.pageTag === params.page) return data.items;
     const cached = isFeaturedMode ? cacheRef.current.combinedPages.get(params.page) : null;
     return cached || [];
-  }, [isFeaturedMode, params.page, data.items, data.items?.length]);
+  }, [isFeaturedMode, params.page, data.items, data.items?.length, data.pageTag]);
 
   return (
     <div>
