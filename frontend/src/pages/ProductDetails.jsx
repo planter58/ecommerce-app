@@ -4,7 +4,7 @@ import { fetchProduct, fetchProducts } from '../api/products';
 import { CartContext } from '../context/CartContext.jsx';
 import { Link } from 'react-router-dom';
 import { fetchProductReviews } from '../api/reviews';
-import { toAbsoluteUrl } from '../utils/media';
+import { toAbsoluteUrl, toCoverUrl } from '../utils/media';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -48,8 +48,8 @@ export default function ProductDetails() {
         <div style={{ display:'flex', gap:12 }}>
           <div style={{ flex:1 }}>
             <div style={{ position:'relative' }}>
-              {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700 }}>{discountPct}%</div>}
-              <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'cover' }} />
+              {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
+              <img src={toCoverUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'cover' }} />
             </div>
           </div>
           {product.images && product.images.length > 0 && (
@@ -123,7 +123,7 @@ export default function ProductDetails() {
                         {Math.round((1 - (sp.price_cents / sp.compare_at_price_cents)) * 100)}%
                       </div>
                     )}
-                    <img src={toAbsoluteUrl(sp.image_url || (sp.images && sp.images[0]?.url) || '')} alt={sp.title} style={{ width:'100%', height:160, objectFit:'cover', borderRadius:8 }} />
+                    <img src={toCoverUrl(sp.image_url || (sp.images && sp.images[0]?.url) || '')} alt={sp.title} style={{ width:'100%', height:160, objectFit:'cover', borderRadius:8 }} />
                   </div>
                   <div className="body">
                     <div className="title" style={{ margin:0 }}>{sp.title}</div>

@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { toAbsoluteUrl } from '../utils/media';
+import { toAbsoluteUrl, toCoverUrl } from '../utils/media';
 
 function ProductCard({ product, index = 0 }) {
-  const cover = toAbsoluteUrl(product.image_url || (product.images && product.images[0]?.url) || '');
+  const original = product.image_url || (product.images && product.images[0]?.url) || '';
+  const cover = toAbsoluteUrl(original);
+  const coverTransformed = toCoverUrl(original);
   const hasCompare = typeof product.compare_at_price_cents === 'number' && product.compare_at_price_cents > 0 && product.compare_at_price_cents > product.price_cents;
   const discountPct = hasCompare ? Math.round((1 - (product.price_cents / product.compare_at_price_cents)) * 100) : 0;
   const [loaded, setLoaded] = useState(false);
@@ -29,7 +31,7 @@ function ProductCard({ product, index = 0 }) {
             style={{
               position:'absolute',
               inset:0,
-              backgroundImage: cover ? `url(${cover})` : undefined,
+              backgroundImage: coverTransformed ? `url(${coverTransformed})` : undefined,
               backgroundSize:'cover',
               backgroundPosition:'center',
               filter:'blur(12px)',
@@ -47,7 +49,7 @@ function ProductCard({ product, index = 0 }) {
           )}
           <img
             className="cover"
-            src={cover}
+            src={coverTransformed || cover}
             alt={product.title}
             loading={imgPriority.loading}
             decoding="async"
