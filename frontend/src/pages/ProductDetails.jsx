@@ -5,6 +5,7 @@ import { CartContext } from '../context/CartContext.jsx';
 import { Link } from 'react-router-dom';
 import { fetchProductReviews } from '../api/reviews';
 import { toAbsoluteUrl, toCoverUrl } from '../utils/media';
+import ProductCard from '../components/ProductCard.jsx';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -32,6 +33,8 @@ export default function ProductDetails() {
       }
     });
     fetchProductReviews(id).then(setReviews);
+    // Ensure we start from top when navigating to a new similar product
+    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
   }, [id]);
   if (!product) return <div>Loading...</div>;
 
@@ -44,9 +47,10 @@ export default function ProductDetails() {
   const discountPct = hasCompare ? Math.round((1 - (product.price_cents / product.compare_at_price_cents)) * 100) : 0;
   return (
     <div className="product">
-      <div className="media">
-        <div style={{ display:'flex', gap:12 }}>
-          <div style={{ flex:1 }}>
+      {/* Top row: Selected product (media) and Details in two bordered boxes; responsive 1 or 2 cols */}
+      <div style={{ display:'grid', gap:16, gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))' }}>
+        <div className="media card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:12 }}>
+          <div>
             <div style={{ position:'relative' }}>
               {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
               {/* Show full image (no scale-to-fill) */}
@@ -54,7 +58,7 @@ export default function ProductDetails() {
             </div>
           </div>
           {product.images && product.images.length > 0 && (
-            <div className="thumbs" style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:420, overflowY:'auto' }}>
+            <div className="thumbs mt-12" style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:420, overflowY:'auto' }}>
               {product.images.map((img) => (
                 <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
                   <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
@@ -63,85 +67,67 @@ export default function ProductDetails() {
             </div>
           )}
         </div>
-      </div>
-      <div className="panel">
-        <h2 style={{ marginTop: 0 }}>{product.title}</h2>
-        <div className="price" style={{ fontSize: 20, display:'flex', alignItems:'baseline', gap:12 }}>
-          <span>KSh {(product.price_cents/100).toFixed(2)}</span>
-          {hasCompare && (
-            <span className="muted" style={{ textDecoration:'line-through', opacity:0.6 }}>KSh {(product.compare_at_price_cents/100).toFixed(2)}</span>
+        <div className="panel card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
+          <h2 style={{ marginTop: 0 }}>{product.title}</h2>
+          <div className="price" style={{ fontSize: 20, display:'flex', alignItems:'baseline', gap:12 }}>
+            <span>KSh {(product.price_cents/100).toFixed(2)}</span>
+            {hasCompare && (
+              <span className="muted" style={{ textDecoration:'line-through', opacity:0.6 }}>KSh {(product.compare_at_price_cents/100).toFixed(2)}</span>
+            )}
+          </div>
+          <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+            {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
+            {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
+            <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
+          </div>
+          {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
+          <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span>Quantity:</span>
+            <button type="button" className="button ghost" onClick={()=>setQty(q => Math.max(1, q-1))}>-</button>
+            <div className="input" style={{ width:48, textAlign:'center' }}>{qty}</div>
+            <button type="button" className="button ghost" onClick={()=>setQty(q => q+1)}>+</button>
+          </div>
+          <div className="mt-16">
+            <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
+            <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
+          </div>
+          {!added ? (
+            <button className="button mt-16" onClick={add}>Add to Cart</button>
+          ) : (
+            <div className="actions mt-16" style={{ display:'flex', gap:10 }}>
+              <Link to="/cart"><button className="button">Proceed to Checkout</button></Link>
+              <Link className="button ghost" to="/">Continue Shopping</Link>
+            </div>
           )}
         </div>
-        <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
-          {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
-          {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
-          <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
-        </div>
-        {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
-        <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span>Quantity:</span>
-          <button type="button" className="button ghost" onClick={()=>setQty(q => Math.max(1, q-1))}>-</button>
-          <div className="input" style={{ width:48, textAlign:'center' }}>{qty}</div>
-          <button type="button" className="button ghost" onClick={()=>setQty(q => q+1)}>+</button>
-        </div>
-        <div className="mt-16">
-          <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
-          <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
-        </div>
-        {!added ? (
-          <button className="button mt-16" onClick={add}>Add to Cart</button>
-        ) : (
-          <div className="actions mt-16" style={{ display:'flex', gap:10 }}>
-            <Link to="/cart"><button className="button">Proceed to Checkout</button></Link>
-            <Link className="button ghost" to="/">Continue Shopping</Link>
-          </div>
-        )}
-        <div className="mt-24">
-          <h4 style={{ margin: '16px 0 8px 0' }}>Customer Reviews ({reviews.length})</h4>
-          {reviews.length === 0 && <div className="small">No reviews yet.</div>}
-          <div className="stack mt-8" style={{ gap:12 }}>
-            {reviews.map(r => (
-              <div key={r.id} className="card" style={{ padding:12 }}>
-                <div style={{ display:'flex', justifyContent:'space-between' }}>
-                  <strong>{r.user_name || 'Customer'}</strong>
-                  <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                </div>
-                {r.comment && <div className="mt-8">{r.comment}</div>}
-                <div className="small mt-8" style={{ color:'#666' }}>{new Date(r.created_at).toLocaleString()}</div>
+      </div>
+      <div className="mt-24">
+        <h4 style={{ margin: '16px 0 8px 0' }}>Customer Reviews ({reviews.length})</h4>
+        {reviews.length === 0 && <div className="small">No reviews yet.</div>}
+        <div className="stack mt-8" style={{ gap:12 }}>
+          {reviews.map(r => (
+            <div key={r.id} className="card" style={{ padding:12 }}>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <strong>{r.user_name || 'Customer'}</strong>
+                <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
               </div>
+              {r.comment && <div className="mt-8">{r.comment}</div>}
+              <div className="small mt-8" style={{ color:'#666' }}>{new Date(r.created_at).toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {similar.length > 0 && (
+        <div className="mt-24">
+          <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
+          {/* Responsive grid: 1 per row on small screens, 2+ on larger; use ProductCard for full details */}
+          <div className="products-grid" style={{ display:'grid', gap:12, gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))' }}>
+            {similar.map((sp, idx) => (
+              <ProductCard key={sp.id} product={sp} index={idx} />
             ))}
           </div>
         </div>
-        {similar.length > 0 && (
-          <div className="mt-24" style={{ background: 'var(--panel-bg, #f7f8fb)', padding: 16, borderRadius: 10, border: '1px solid rgba(0,0,0,0.06)', borderTop: '2px solid rgba(0,0,0,0.12)', marginTop: 24 }}>
-            <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
-            {/* Responsive grid: 1 per row on small screens, 2+ on larger */}
-            <div className="products-grid" style={{ display:'grid', gap:12, gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))' }}>
-              {similar.map(sp => (
-                <Link key={sp.id} to={`/product/${sp.id}`} className="card link" style={{ textDecoration:'none' }}>
-                  <div style={{ position:'relative' }}>
-                    {typeof sp.compare_at_price_cents==='number' && sp.compare_at_price_cents>sp.price_cents && (
-                      <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700 }}>
-                        {Math.round((1 - (sp.price_cents / sp.compare_at_price_cents)) * 100)}%
-                      </div>
-                    )}
-                    <img src={toCoverUrl(sp.image_url || (sp.images && sp.images[0]?.url) || '')} alt={sp.title} style={{ width:'100%', height:160, objectFit:'cover', borderRadius:8 }} />
-                  </div>
-                  <div className="body">
-                    <div className="title" style={{ margin:0 }}>{sp.title}</div>
-                    <div className="price" style={{ display:'flex', gap:8 }}>
-                      <span>KSh {(sp.price_cents/100).toFixed(2)}</span>
-                      {typeof sp.compare_at_price_cents==='number' && sp.compare_at_price_cents>sp.price_cents && (
-                        <span className="muted" style={{ textDecoration:'line-through', opacity:0.6 }}>KSh {(sp.compare_at_price_cents/100).toFixed(2)}</span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
