@@ -16,6 +16,7 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1);
   const { addToCart } = useContext(CartContext);
   const [activeImage, setActiveImage] = useState(null);
+  const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
 
   useEffect(() => {
     fetchProduct(id).then(async (p) => {
@@ -36,6 +37,13 @@ export default function ProductDetails() {
     // Ensure we start from top when navigating to a new similar product
     try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
   }, [id]);
+
+  // Track viewport width to drive responsive columns (JS-based to avoid CSS edits)
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    try { window.addEventListener('resize', onResize); } catch {}
+    return () => { try { window.removeEventListener('resize', onResize); } catch {} };
+  }, []);
   if (!product) return <div>Loading...</div>;
 
   const add = async () => {
@@ -45,10 +53,12 @@ export default function ProductDetails() {
 
   const hasCompare = typeof product.compare_at_price_cents === 'number' && product.compare_at_price_cents > 0 && product.compare_at_price_cents > product.price_cents;
   const discountPct = hasCompare ? Math.round((1 - (product.price_cents / product.compare_at_price_cents)) * 100) : 0;
+  const topGridCols = vw >= 1024 ? '1fr 1fr' : '1fr';
+  const similarCols = vw >= 1024 ? 4 : (vw >= 768 ? 2 : 1);
   return (
     <div className="product">
       {/* Top row: Selected product (media) and Details in two bordered boxes; responsive 1 or 2 cols */}
-      <div style={{ display:'grid', gap:16, gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))' }}>
+      <div style={{ display:'grid', gap:16, gridTemplateColumns: topGridCols }}>
         <div className="media card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:12 }}>
           <div>
             <div style={{ position:'relative' }}>
@@ -121,7 +131,7 @@ export default function ProductDetails() {
         <div className="mt-24">
           <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
           {/* Responsive grid: 1 per row on small screens, 2+ on larger; use ProductCard for full details */}
-          <div className="products-grid" style={{ display:'grid', gap:12, gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))' }}>
+          <div className="products-grid" style={{ display:'grid', gap:12, gridTemplateColumns:`repeat(${similarCols}, 1fr)` }}>
             {similar.map((sp, idx) => (
               <ProductCard key={sp.id} product={sp} index={idx} />
             ))}
