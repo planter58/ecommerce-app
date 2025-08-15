@@ -1,17 +1,36 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { toAbsoluteUrl } from '../utils/media';
 
-function ProductCard({ product }) {
+function ProductCard({ product, index = 0 }) {
   const cover = toAbsoluteUrl(product.image_url || (product.images && product.images[0]?.url) || '');
   const hasCompare = typeof product.compare_at_price_cents === 'number' && product.compare_at_price_cents > 0 && product.compare_at_price_cents > product.price_cents;
   const discountPct = hasCompare ? Math.round((1 - (product.price_cents / product.compare_at_price_cents)) * 100) : 0;
+  const [loaded, setLoaded] = useState(false);
+  const imgPriority = useMemo(() => ({
+    loading: index < 8 ? 'eager' : 'lazy',
+    fetchPriority: index < 8 ? 'high' : 'auto'
+  }), [index]);
   return (
     <div className="card" style={{ position:'relative' }}>
       <Link to={`/product/${product.id}`} className="link" style={{ textDecoration: 'none' }}>
-        <div style={{ position:'relative' }}>
+        <div style={{ position:'relative', background:'var(--card-bg, transparent)', overflow:'hidden', width: '100%' }}>
           {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700 }}>{discountPct}%</div>}
-          <img className="cover" src={cover} alt={product.title} loading="lazy" decoding="async" width="400" height="300" />
+          {!loaded && (
+            <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(128,128,128,0.08)' }} />
+          )}
+          <img
+            className="cover"
+            src={cover}
+            alt={product.title}
+            loading={imgPriority.loading}
+            decoding="async"
+            fetchpriority={imgPriority.fetchPriority}
+            width="400"
+            height="300"
+            onLoad={() => setLoaded(true)}
+            style={{ display:'block', width:'100%', height:'auto', opacity: loaded ? 1 : 0, transition:'opacity 180ms ease-out' }}
+          />
         </div>
         <div className="body">
           <h4 className="title">{product.title}</h4>

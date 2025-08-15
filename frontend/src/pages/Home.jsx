@@ -252,7 +252,7 @@ export default function Home() {
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
       <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'layout paint' }}>
-        {itemsToRender.map(p => <ProductCard key={p.id} product={p} />)}
+        {itemsToRender.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
       </div>
       {((data.total || 0) > params.limit) && (
         <Pagination page={params.page} total={data.total} limit={params.limit}
