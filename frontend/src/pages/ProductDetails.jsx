@@ -54,27 +54,48 @@ export default function ProductDetails() {
   const hasCompare = typeof product.compare_at_price_cents === 'number' && product.compare_at_price_cents > 0 && product.compare_at_price_cents > product.price_cents;
   const discountPct = hasCompare ? Math.round((1 - (product.price_cents / product.compare_at_price_cents)) * 100) : 0;
   const topGridCols = vw >= 1024 ? '1fr 1fr' : '1fr';
-  const similarCols = vw >= 1024 ? 4 : (vw >= 768 ? 2 : 1);
+  const similarCols = vw >= 1024 ? 4 : 2; // phone/tablet: 2 per row, desktop: 4 per row
   return (
     <div className="product">
       {/* Top row: Selected product (media) and Details in two bordered boxes; responsive 1 or 2 cols */}
       <div style={{ display:'grid', gap:16, gridTemplateColumns: topGridCols }}>
         <div className="media card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:12 }}>
-          <div>
-            <div style={{ position:'relative' }}>
-              {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
-              {/* Show full image (no scale-to-fill) */}
-              <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
+          {vw >= 1024 ? (
+            // Desktop: thumbnails on the side (left), main image on the right
+            <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+              {product.images && product.images.length > 0 && (
+                <div className="thumbs-vert" style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'70vh', overflowY:'auto', width:84 }}>
+                  {product.images.map((img) => (
+                    <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
+                      <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ position:'relative', flex:1 }}>
+                {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
+                <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
+              </div>
             </div>
-          </div>
-          {product.images && product.images.length > 0 && (
-            <div className="thumbs mt-12" style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:420, overflowY:'auto' }}>
-              {product.images.map((img) => (
-                <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
-                  <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
-                </button>
-              ))}
-            </div>
+          ) : (
+            // Mobile/Tablet: main image first, thumbnails below (unchanged UX)
+            <>
+              <div>
+                <div style={{ position:'relative' }}>
+                  {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
+                  <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
+                </div>
+              </div>
+              {product.images && product.images.length > 0 && (
+                <div className="thumbs mt-12" style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:420, overflowY:'auto' }}>
+                  {product.images.map((img) => (
+                    <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
+                      <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className="panel card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
