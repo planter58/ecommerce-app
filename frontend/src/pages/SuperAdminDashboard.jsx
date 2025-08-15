@@ -152,7 +152,7 @@ export default function SuperAdminDashboard() {
         draggable
         onDragStart={() => onDragStart(idx)}
         onDragOver={onDragOver}
-        onDrop={() => onDrop(idx)}
+        onDrop={(e) => { e.preventDefault(); onDrop(idx); }}
         style={{ alignItems:'center', gap:8, border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:8, background:'#fff' }}
       >
         <span className="pill">{idx+1}</span>

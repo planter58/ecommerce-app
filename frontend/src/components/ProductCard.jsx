@@ -14,7 +14,15 @@ function ProductCard({ product, index = 0 }) {
   return (
     <div className="card" style={{ position:'relative' }}>
       <Link to={`/product/${product.id}`} className="link" style={{ textDecoration: 'none' }}>
-        <div style={{ position:'relative', background:'var(--card-bg, transparent)', overflow:'hidden', width: '100%' }}>
+        <div
+          style={{
+            position:'relative',
+            background:'var(--card-bg, transparent)',
+            overflow:'hidden',
+            width: '100%',
+            aspectRatio: '4 / 3', // enforce uniform frame like Jumia
+          }}
+        >
           {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700 }}>{discountPct}%</div>}
           {!loaded && (
             <div aria-hidden style={{ position:'absolute', inset:0, background:'rgba(128,128,128,0.08)' }} />
@@ -29,7 +37,16 @@ function ProductCard({ product, index = 0 }) {
             width="400"
             height="300"
             onLoad={() => setLoaded(true)}
-            style={{ display:'block', width:'100%', height:'auto', opacity: loaded ? 1 : 0, transition:'opacity 180ms ease-out' }}
+            style={{
+              position:'absolute',
+              inset:0,
+              width:'100%',
+              height:'100%',
+              objectFit:'contain',
+              display:'block',
+              opacity: loaded ? 1 : 0,
+              transition:'opacity 180ms ease-out'
+            }}
           />
         </div>
         <div className="body">
