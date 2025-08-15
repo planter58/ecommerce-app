@@ -54,7 +54,7 @@ export async function suggestFeaturedProducts(_req, res, next) {
       `SELECT p.id, p.title, p.image_url
        FROM products p
        ${whereSql}
-       ORDER BY p.created_at DESC
+       ORDER BY p.created_at DESC, p.id DESC
        LIMIT ${limit} OFFSET ${offset}`,
       params
     );
@@ -146,7 +146,7 @@ export async function listProducts(req, res, next) {
       LEFT JOIN reviews r ON r.product_id = p.id
       ${whereSql}
       GROUP BY p.id, c.name, c.slug, v.business_name
-      ORDER BY p.created_at DESC
+      ORDER BY p.created_at DESC, p.id DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
 
