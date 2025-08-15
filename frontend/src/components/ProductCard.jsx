@@ -46,7 +46,7 @@ function ProductCard({ product, index = 0 }) {
               inset:0,
               width:'100%',
               height:'100%',
-              objectFit:'cover',
+              objectFit:'contain',
               display:'block',
               zIndex:2,
               opacity: loaded ? 1 : 0,
