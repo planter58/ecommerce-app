@@ -23,6 +23,20 @@ function ProductCard({ product, index = 0 }) {
             aspectRatio: '4 / 3', // enforce uniform frame like Jumia
           }}
         >
+          {/* Blurred underlay to simulate cover without heavy repaint */}
+          <div
+            aria-hidden
+            style={{
+              position:'absolute',
+              inset:0,
+              backgroundImage: cover ? `url(${cover})` : undefined,
+              backgroundSize:'cover',
+              backgroundPosition:'center',
+              filter:'blur(12px)',
+              transform:'scale(1.05)',
+              zIndex:0,
+            }}
+          />
           {hasCompare && (
             <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:3 }}>
               {discountPct}%
