@@ -60,43 +60,22 @@ export default function ProductDetails() {
       {/* Top row: Selected product (media) and Details in two bordered boxes; responsive 1 or 2 cols */}
       <div style={{ display:'grid', gap:16, gridTemplateColumns: topGridCols }}>
         <div className="media card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:12 }}>
-          {vw >= 1024 ? (
-            // Desktop: thumbnails on the side (left), main image on the right
-            <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-              {product.images && product.images.length > 0 && (
-                <div className="thumbs-vert" style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'70vh', overflowY:'auto', width:84 }}>
-                  {product.images.map((img) => (
-                    <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
-                      <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div style={{ position:'relative', flex:1 }}>
-                {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
-                <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
+          {/* Thumbnails on the side (left) and main image on the right for ALL viewports */}
+          <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+            {product.images && product.images.length > 0 && (
+              <div className="thumbs-vert" style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'70vh', overflowY:'auto', width:84 }}>
+                {product.images.map((img) => (
+                  <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
+                    <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
+                  </button>
+                ))}
               </div>
+            )}
+            <div style={{ position:'relative', flex:1 }}>
+              {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
+              <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
             </div>
-          ) : (
-            // Mobile/Tablet: main image first, thumbnails below (unchanged UX)
-            <>
-              <div>
-                <div style={{ position:'relative' }}>
-                  {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
-                  <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
-                </div>
-              </div>
-              {product.images && product.images.length > 0 && (
-                <div className="thumbs mt-12" style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:420, overflowY:'auto' }}>
-                  {product.images.map((img) => (
-                    <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
-                      <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+          </div>
         </div>
         <div className="panel card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
           <h2 style={{ marginTop: 0 }}>{product.title}</h2>
@@ -132,6 +111,17 @@ export default function ProductDetails() {
           )}
         </div>
       </div>
+      {similar.length > 0 && (
+        <div className="mt-24">
+          <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
+          {/* Responsive grid: 1 per row on small screens, 2+ on larger; use ProductCard for full details */}
+          <div className="products-grid" style={{ display:'grid', gap:12, width:'100%', gridTemplateColumns:`repeat(${similarCols}, 1fr)` }}>
+            {similar.map((sp, idx) => (
+              <ProductCard key={sp.id} product={sp} index={idx} />
+            ))}
+          </div>
+        </div>
+      )}
       {vw < 1024 && (
         <div className="mt-24">
           <h4 style={{ margin: '16px 0 8px 0' }}>Customer Reviews ({reviews.length})</h4>
@@ -146,17 +136,6 @@ export default function ProductDetails() {
                 {r.comment && <div className="mt-8">{r.comment}</div>}
                 <div className="small mt-8" style={{ color:'#666' }}>{new Date(r.created_at).toLocaleString()}</div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {similar.length > 0 && (
-        <div className="mt-24">
-          <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
-          {/* Responsive grid: 1 per row on small screens, 2+ on larger; use ProductCard for full details */}
-          <div className="products-grid" style={{ display:'grid', gap:12, width:'100%', gridTemplateColumns:`repeat(${similarCols}, 1fr)` }}>
-            {similar.map((sp, idx) => (
-              <ProductCard key={sp.id} product={sp} index={idx} />
             ))}
           </div>
         </div>
