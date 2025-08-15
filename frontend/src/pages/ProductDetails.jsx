@@ -56,7 +56,7 @@ export default function ProductDetails() {
   const topGridCols = vw >= 1024 ? '1fr' : '1fr';
   const similarCols = vw >= 1024 ? 4 : 2; // phone/tablet: 2 per row, desktop: 4 per row
   return (
-    <div className="product">
+    <div className="product" style={vw >= 1024 ? { display: 'block' } : undefined}>
       {/* Desktop: single full-width card (media + details in two-column layout). Mobile: current stacked cards with thumbs on right. */}
       {vw >= 1024 ? (
         <div className="card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
