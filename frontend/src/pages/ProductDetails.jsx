@@ -57,40 +57,35 @@ export default function ProductDetails() {
   const similarCols = vw >= 1024 ? 4 : 2; // phone/tablet: 2 per row, desktop: 4 per row
   return (
     <div className="product">
-      {/* Top row: Selected product (media) and Details in two bordered boxes; responsive 1 or 2 cols */}
-      <div style={{ display:'grid', gap:16, gridTemplateColumns: topGridCols }}>
-        <div className="media card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:12 }}>
-          {/* Thumbnails on the side (left) and main image on the right for ALL viewports */}
-          <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
-            {product.images && product.images.length > 0 && (
-              <div className="thumbs-vert" style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'70vh', overflowY:'auto', width:84 }}>
-                {product.images.map((img) => (
-                  <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
-                    <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
-                  </button>
-                ))}
+      {/* Top row: Selected product (media) + Details in a single bordered card; 1 col on phone, 2 cols on desktop */}
+      <div className="card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
+        <div style={{ display:'grid', gap:16, gridTemplateColumns: topGridCols }}>
+          <div className="media">
+            {/* Main image on the left, thumbnails on the right for ALL viewports */}
+            <div style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+              <div style={{ position:'relative', flex:1 }}>
+                {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
+                <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
               </div>
-            )}
-            <div style={{ position:'relative', flex:1 }}>
-              {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
-              <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
+              {product.images && product.images.length > 0 && (
+                <div className="thumbs-vert" style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'70vh', overflowY:'auto', width:84 }}>
+                  {product.images.map((img) => (
+                    <button key={img.id} type="button" className="ghost" style={{ padding:0, border:'none', background:'transparent' }} onClick={()=>setActiveImage(toAbsoluteUrl(img.url))}>
+                      <img src={toAbsoluteUrl(img.url)} alt="thumb" style={{ width:72, height:72, objectFit:'cover', borderRadius:6, outline: toAbsoluteUrl(activeImage)===toAbsoluteUrl(img.url)? '2px solid var(--primary)':'none' }} />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-        <div className="panel card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
-          <h2 style={{ marginTop: 0 }}>{product.title}</h2>
-          <div className="price" style={{ fontSize: 20, display:'flex', alignItems:'baseline', gap:12 }}>
-            <span>KSh {(product.price_cents/100).toFixed(2)}</span>
-            {hasCompare && (
-              <span className="muted" style={{ textDecoration:'line-through', opacity:0.6 }}>KSh {(product.compare_at_price_cents/100).toFixed(2)}</span>
-            )}
-          </div>
-          <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
-            {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
-            {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
-            <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
-          </div>
-          {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
+          <div className="panel">
+            <h2 style={{ marginTop: 0 }}>{product.title}</h2>
+            <div className="price" style={{ fontSize: 20, display:'flex', alignItems:'baseline', gap:12 }}>
+              <span>KSh {(product.price_cents/100).toFixed(2)}</span>
+              {hasCompare && (
+                <span className="muted" style={{ textDecoration:'line-through', opacity:0.6 }}>KSh {(product.compare_at_price_cents/100).toFixed(2)}</span>
+              )}
+            </div>
           <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span>Quantity:</span>
             <button type="button" className="button ghost" onClick={()=>setQty(q => Math.max(1, q-1))}>-</button>
@@ -110,6 +105,7 @@ export default function ProductDetails() {
             </div>
           )}
         </div>
+      </div>
       </div>
       {similar.length > 0 && (
         <div className="mt-24">
