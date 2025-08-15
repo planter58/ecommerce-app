@@ -211,6 +211,34 @@ export default function Home() {
     }
   }, [params.page, params.q, params.category]);
 
+  // After initial paint, prefetch remainder page 2 (featured mode, page 1 only) during idle time
+  useEffect(() => {
+    if (!isFeaturedMode || params.page !== 1) return;
+    const featured = cacheRef.current.featured || [];
+    const featuredIds = cacheRef.current.featuredIds || [];
+    const remainingParams = { ...params, q: '', category: '', page: 2, exclude_ids: featuredIds.join(',') };
+    // If we already have page 2 cached, skip
+    if (cacheRef.current.remainingPages.get(2)) return;
+    const prefetch = async () => {
+      try {
+        const resp = await fetchProducts(remainingParams);
+        const page2 = resp.items || [];
+        cacheRef.current.remainingPages.set(2, page2);
+        for (const p of page2) cacheRef.current.productById.set(p.id, p);
+      } catch {
+        // ignore prefetch errors
+      }
+    };
+    const schedule = (cb) => {
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => cb(), { timeout: 1500 });
+      } else {
+        setTimeout(cb, 0);
+      }
+    };
+    schedule(prefetch);
+  }, [isFeaturedMode, params.page, params.limit, params.q, params.category]);
+
   // Fallback to cached combined slice to avoid blank flashes during fast transitions
   const itemsToRender = useMemo(() => {
     const primary = (data.items && data.items.length) ? data.items : null;
@@ -223,7 +251,7 @@ export default function Home() {
     <div>
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
-      <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'content' }}>
+      <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'layout paint' }}>
         {itemsToRender.map(p => <ProductCard key={p.id} product={p} />)}
       </div>
       {((data.total || 0) > params.limit) && (
