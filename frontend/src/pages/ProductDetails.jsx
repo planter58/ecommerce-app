@@ -49,7 +49,8 @@ export default function ProductDetails() {
           <div style={{ flex:1 }}>
             <div style={{ position:'relative' }}>
               {hasCompare && <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'4px 8px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:2 }}>{discountPct}%</div>}
-              <img src={toCoverUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'cover' }} />
+              {/* Show full image (no scale-to-fill) */}
+              <img src={toAbsoluteUrl(activeImage || product.image_url)} alt={product.title} style={{ width:'100%', borderRadius:8, objectFit:'contain', maxHeight: '70vh', background:'var(--card-bg, #f7f8fb)' }} />
             </div>
           </div>
           {product.images && product.images.length > 0 && (
@@ -114,7 +115,8 @@ export default function ProductDetails() {
         {similar.length > 0 && (
           <div className="mt-24" style={{ background: 'var(--panel-bg, #f7f8fb)', padding: 16, borderRadius: 10, border: '1px solid rgba(0,0,0,0.06)', borderTop: '2px solid rgba(0,0,0,0.12)', marginTop: 24 }}>
             <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
-            <div className="products-grid" style={{ gap:12 }}>
+            {/* Responsive grid: 1 per row on small screens, 2+ on larger */}
+            <div className="products-grid" style={{ display:'grid', gap:12, gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))' }}>
               {similar.map(sp => (
                 <Link key={sp.id} to={`/product/${sp.id}`} className="card link" style={{ textDecoration:'none' }}>
                   <div style={{ position:'relative' }}>
