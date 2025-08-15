@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { fetchProducts, fetchFeaturedProducts } from '../api/products';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
@@ -101,7 +101,15 @@ export default function Home() {
             const list = featured.concat(rest.slice(0, restNeed));
             // remap to stable objects
             items = list.map(p => cacheRef.current.productById.get(p.id) || p);
-            cacheRef.current.combinedPages.set(1, items);
+            // Keep stable reference for page 1 combined array
+            const existing = cacheRef.current.combinedPages.get(1);
+            if (existing) {
+              existing.length = 0;
+              existing.push(...items);
+              items = existing; // reuse stable ref
+            } else {
+              cacheRef.current.combinedPages.set(1, items);
+            }
           } else {
             // Subsequent pages show only remaining, offset by featured.length
             const remainingStart = startIndex - featured.length; // may be >= 0
@@ -204,9 +212,12 @@ export default function Home() {
   }, [params.page, params.q, params.category]);
 
   // Fallback to cached combined slice to avoid blank flashes during fast transitions
-  const itemsToRender = (data.items && data.items.length)
-    ? data.items
-    : (isFeaturedMode && cacheRef.current.combinedPages.get(params.page)) || [];
+  const itemsToRender = useMemo(() => {
+    const primary = (data.items && data.items.length) ? data.items : null;
+    if (primary) return primary;
+    const cached = isFeaturedMode ? cacheRef.current.combinedPages.get(params.page) : null;
+    return cached || [];
+  }, [isFeaturedMode, params.page, data.items, data.items?.length]);
 
   return (
     <div>
