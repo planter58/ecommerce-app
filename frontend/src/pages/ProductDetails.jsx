@@ -111,27 +111,29 @@ export default function ProductDetails() {
           )}
         </div>
       </div>
-      <div className="mt-24">
-        <h4 style={{ margin: '16px 0 8px 0' }}>Customer Reviews ({reviews.length})</h4>
-        {reviews.length === 0 && <div className="small">No reviews yet.</div>}
-        <div className="stack mt-8" style={{ gap:12 }}>
-          {reviews.map(r => (
-            <div key={r.id} className="card" style={{ padding:12 }}>
-              <div style={{ display:'flex', justifyContent:'space-between' }}>
-                <strong>{r.user_name || 'Customer'}</strong>
-                <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+      {vw < 1024 && (
+        <div className="mt-24">
+          <h4 style={{ margin: '16px 0 8px 0' }}>Customer Reviews ({reviews.length})</h4>
+          {reviews.length === 0 && <div className="small">No reviews yet.</div>}
+          <div className="stack mt-8" style={{ gap:12 }}>
+            {reviews.map(r => (
+              <div key={r.id} className="card" style={{ padding:12 }}>
+                <div style={{ display:'flex', justifyContent:'space-between' }}>
+                  <strong>{r.user_name || 'Customer'}</strong>
+                  <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                </div>
+                {r.comment && <div className="mt-8">{r.comment}</div>}
+                <div className="small mt-8" style={{ color:'#666' }}>{new Date(r.created_at).toLocaleString()}</div>
               </div>
-              {r.comment && <div className="mt-8">{r.comment}</div>}
-              <div className="small mt-8" style={{ color:'#666' }}>{new Date(r.created_at).toLocaleString()}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       {similar.length > 0 && (
         <div className="mt-24">
           <h4 style={{ margin: '0 0 12px 0' }}>Similar Products</h4>
           {/* Responsive grid: 1 per row on small screens, 2+ on larger; use ProductCard for full details */}
-          <div className="products-grid" style={{ display:'grid', gap:12, gridTemplateColumns:`repeat(${similarCols}, 1fr)` }}>
+          <div className="products-grid" style={{ display:'grid', gap:12, width:'100%', gridTemplateColumns:`repeat(${similarCols}, 1fr)` }}>
             {similar.map((sp, idx) => (
               <ProductCard key={sp.id} product={sp} index={idx} />
             ))}
