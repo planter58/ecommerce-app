@@ -32,6 +32,12 @@ export default function AdminDashboard() {
   const [editAdmin, setEditAdmin] = useState({ name:'', phone:'', location:'', street_address:'', delivery_preference:'', bio:'', avatar_url:'' });
   const [selectedAdmins, setSelectedAdmins] = useState([]);
 
+  // Ribbon manager state
+  const [ribbonItems, setRibbonItems] = useState([]);
+  const [ribbonForm, setRibbonForm] = useState({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
+  const [ribbonEditingId, setRibbonEditingId] = useState(null);
+  const [ribbonUploadFile, setRibbonUploadFile] = useState(null);
+
   // Featured products state (super_admin only)
   const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
   const [suggestions, setSuggestions] = useState([]); // [{id, title, image_url}]
@@ -59,6 +65,8 @@ export default function AdminDashboard() {
   };
   useEffect(() => { if (tab === 'vendors') loadPending(); }, [tab]);
   useEffect(() => { if (tab === 'admins' && user?.role === 'super_admin') loadAdmins(); }, [tab, adminQuery, adminStatus]);
+  // Load ribbon items when Ribbon tab opens
+  useEffect(() => { if (tab === 'ribbon') loadRibbon(); }, [tab]);
 
   const loadFeaturedAdmin = async () => {
     try { const { data } = await api.get('/admin/featured'); setFeatured(data || []); } catch { setFeatured([]); }
@@ -244,6 +252,59 @@ export default function AdminDashboard() {
     await loadAdmins();
   };
 
+  // Ribbon Manager logic
+  const loadRibbon = async () => {
+    try { const { data } = await api.get('/admin/ribbon'); setRibbonItems(data || []); } catch { setRibbonItems([]); }
+  };
+  const createRibbon = async (e) => {
+    e.preventDefault();
+    const payload = { ...ribbonForm };
+    try {
+      const { data } = await api.post('/admin/ribbon', payload);
+      setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
+      await loadRibbon();
+      if (ribbonUploadFile) {
+        await uploadRibbonMedia(data.id, ribbonUploadFile);
+        setRibbonUploadFile(null);
+        await loadRibbon();
+      }
+    } catch {}
+  };
+  const saveRibbon = async (id) => {
+    try { await api.put(`/admin/ribbon/${id}`, ribbonForm); setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); await loadRibbon(); } catch {}
+  };
+  const editRibbon = (it) => { setRibbonEditingId(it.id); setRibbonForm({ title: it.title||'', body: it.body||'', cta_label: it.cta_label||'', cta_url: it.cta_url||'', media_type: it.media_type||'' }); };
+  const cancelRibbonEdit = () => { setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); };
+  const toggleRibbon = async (id, enabled) => { try { await api.patch(`/admin/ribbon/${id}/enable`, { enabled }); await loadRibbon(); } catch {} };
+  const deleteRibbon = async (id) => { try { await api.delete(`/admin/ribbon/${id}`); await loadRibbon(); } catch {} };
+  const reorderRibbon = async (items) => { try { await api.patch('/admin/ribbon/reorder', { items: items.map((x,i)=>({ id:x.id, position: i+1 })) }); } catch {} };
+  const moveRibbonUp = async (idx) => {
+    if (idx <= 0) return;
+    setRibbonItems(list => {
+      const copy = [...list];
+      [copy[idx-1], copy[idx]] = [copy[idx], copy[idx-1]];
+      const withPos = copy.map((it,i)=>({ ...it, position:i+1 }));
+      reorderRibbon(withPos);
+      return withPos;
+    });
+  };
+  const moveRibbonDown = async (idx) => {
+    setRibbonItems(list => {
+      if (idx >= list.length - 1) return list;
+      const copy = [...list];
+      [copy[idx+1], copy[idx]] = [copy[idx], copy[idx+1]];
+      const withPos = copy.map((it,i)=>({ ...it, position:i+1 }));
+      reorderRibbon(withPos);
+      return withPos;
+    });
+  };
+  const uploadRibbonMedia = async (id, file) => {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('media', file);
+    await api.post(`/admin/ribbon/${id}/media`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  };
+
   return (
     <div>
       <h2>Admin Dashboard</h2>
@@ -251,6 +312,7 @@ export default function AdminDashboard() {
         <button className={`button ${tab==='products'?"":"ghost"}`} onClick={()=>setTab('products')}>Products</button>
         <button className={`button ${tab==='vendors'?"":"ghost"}`} onClick={()=>setTab('vendors')}>Vendors {pendingCount>0 && <span className="badge" style={{ marginLeft:6 }}>{pendingCount}</span>}</button>
         <button className={`button ${tab==='categories'?"":"ghost"}`} onClick={()=>setTab('categories')}>Categories</button>
+        <button className={`button ${tab==='ribbon'?"":"ghost"}`} onClick={()=>setTab('ribbon')}>Ribbon</button>
         {user?.role === 'super_admin' && (
           <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
         )}
@@ -431,6 +493,68 @@ export default function AdminDashboard() {
                 )}
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'ribbon' && (
+        <section className="stack" style={{ gap:12 }}>
+          <div className="card" style={{ padding:12 }}>
+            <h3 style={{ marginTop:0 }}>{ribbonEditingId ? 'Edit Ribbon Item' : 'Create Ribbon Item'}</h3>
+            <form className="grid" style={{ gridTemplateColumns:'1fr 1fr', gap:8 }} onSubmit={ribbonEditingId ? (e)=>{ e.preventDefault(); saveRibbon(ribbonEditingId);} : createRibbon}>
+              <input className="input" placeholder="Title" value={ribbonForm.title} onChange={e=>setRibbonForm(f=>({ ...f, title:e.target.value }))} />
+              <input className="input" placeholder="CTA Label (optional)" value={ribbonForm.cta_label} onChange={e=>setRibbonForm(f=>({ ...f, cta_label:e.target.value }))} />
+              <input className="input" placeholder="CTA URL (optional)" value={ribbonForm.cta_url} onChange={e=>setRibbonForm(f=>({ ...f, cta_url:e.target.value }))} />
+              <select className="input" value={ribbonForm.media_type} onChange={e=>setRibbonForm(f=>({ ...f, media_type:e.target.value }))}>
+                <option value="">Media Type (optional)</option>
+                <option value="image">Image</option>
+                <option value="gif">GIF</option>
+                <option value="video">Video</option>
+              </select>
+              <textarea className="input" style={{ gridColumn:'1 / -1' }} rows={3} placeholder="Body (optional)" value={ribbonForm.body} onChange={e=>setRibbonForm(f=>({ ...f, body:e.target.value }))} />
+              <div style={{ gridColumn:'1 / -1' }}>
+                <label>Upload Media (image/gif/video)</label>
+                <input className="input" type="file" accept="image/*,video/*" onChange={(e)=>setRibbonUploadFile(e.target.files?.[0]||null)} />
+              </div>
+              <div style={{ gridColumn:'1 / -1', display:'flex', gap:8, justifyContent:'flex-end' }}>
+                {ribbonEditingId && <button type="button" className="button ghost" onClick={cancelRibbonEdit}>Cancel</button>}
+                <button className="button" type="submit">{ribbonEditingId ? 'Save' : 'Create'}</button>
+              </div>
+            </form>
+          </div>
+
+          <div className="card" style={{ padding:12 }}>
+            <h3 style={{ marginTop:0 }}>Ribbon Items</h3>
+            {ribbonItems.length === 0 && <div className="small muted">No ribbon items yet</div>}
+            <div className="stack" style={{ gap:8 }}>
+              {ribbonItems.map((it, idx) => (
+                <div key={it.id} className="row" style={{ gap:8, alignItems:'center', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:8 }}>
+                  <span className="pill">{idx+1}</span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontWeight:700, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{it.title || '(no title)'}</div>
+                    <div className="small muted" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{it.body || ''}</div>
+                    <div className="small muted">
+                      {it.media_type ? `Media: ${it.media_type}` : 'No media'} {it.media_url ? '• uploaded' : ''}
+                    </div>
+                  </div>
+                  <label className="row" style={{ gap:6 }}>
+                    <input type="checkbox" checked={!!it.enabled} onChange={(e)=>toggleRibbon(it.id, e.target.checked)} />
+                    <span className="small">Enabled</span>
+                  </label>
+                  <div className="row" style={{ gap:6 }}>
+                    <button className="button ghost" onClick={()=>moveRibbonUp(idx)} disabled={idx===0}>Up</button>
+                    <button className="button ghost" onClick={()=>moveRibbonDown(idx)} disabled={idx===ribbonItems.length-1}>Down</button>
+                  </div>
+                  <div className="row" style={{ gap:6 }}>
+                    <button className="button" onClick={()=>editRibbon(it)}>Edit</button>
+                    <button className="button ghost" onClick={()=>deleteRibbon(it.id)}>Delete</button>
+                  </div>
+                  <div>
+                    <input className="input" type="file" accept="image/*,video/*" onChange={async (e)=>{ const f=e.target.files?.[0]; if (f) { await uploadRibbonMedia(it.id, f); await loadRibbon(); e.target.value=''; } }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
