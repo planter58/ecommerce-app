@@ -37,6 +37,8 @@ export default function AdminDashboard() {
   const [ribbonForm, setRibbonForm] = useState({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
   const [ribbonEditingId, setRibbonEditingId] = useState(null);
   const [ribbonUploadFile, setRibbonUploadFile] = useState(null);
+  const [ribbonDragIndex, setRibbonDragIndex] = useState(null);
+  const [ribbonSelectedIndex, setRibbonSelectedIndex] = useState(0);
 
   // Featured products state (super_admin only)
   const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
@@ -56,6 +58,22 @@ export default function AdminDashboard() {
     ]);
     setProducts(prod.items);
     setCategories(cats);
+  };
+
+  // Ribbon drag-and-drop
+  const onRibbonDragStart = (idx) => setRibbonDragIndex(idx);
+  const onRibbonDragOver = (e, idx) => { e.preventDefault(); if (ribbonDragIndex === null || ribbonDragIndex === idx) return; };
+  const onRibbonDrop = (_e, idx) => {
+    if (ribbonDragIndex === null || ribbonDragIndex === idx) return;
+    setRibbonItems(list => {
+      const copy = [...list];
+      const [moved] = copy.splice(ribbonDragIndex, 1);
+      copy.splice(idx, 0, moved);
+      const withPos = copy.map((it,i)=>({ ...it, position:i+1 }));
+      reorderRibbon(withPos);
+      return withPos;
+    });
+    setRibbonDragIndex(null);
   };
 
   useEffect(() => { load(); }, []);
@@ -523,12 +541,57 @@ export default function AdminDashboard() {
             </form>
           </div>
 
+          {/* Live Preview */}
+          <div className="card" style={{ padding:12 }}>
+            <h3 style={{ marginTop:0 }}>Preview</h3>
+            {(() => {
+              const sel = ribbonEditingId ? { ...ribbonForm } : (ribbonItems[ribbonSelectedIndex] || {});
+              const title = sel.title || '(title)';
+              const body = sel.body || '';
+              const ctaLabel = sel.cta_label || '';
+              const ctaUrl = sel.cta_url || '#';
+              const mediaUrl = sel.media_url || '';
+              const mediaType = sel.media_type || (mediaUrl && /\.(mp4|webm|ogg)$/i.test(mediaUrl) ? 'video' : (mediaUrl ? 'image' : ''));
+              return (
+                <div className="pc-card" style={{ background:'var(--surface-2)', borderRadius:12, overflow:'hidden' }}>
+                  <div className="pc-split" style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr', gap:16, alignItems:'center', width:'100%', minHeight:180 }}>
+                    <div className="pc-split-left" style={{ padding:'12px 16px' }}>
+                      <div className="pc-title" style={{ marginBottom:6 }}>{title}</div>
+                      {body && <div className="pc-text" style={{ marginBottom:10 }}>{body}</div>}
+                      {ctaLabel && <a className="button" href={ctaUrl}>{ctaLabel}</a>}
+                    </div>
+                    <div className="pc-split-right" style={{ padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {mediaUrl ? (
+                        mediaType === 'video' ? (
+                          <video src={mediaUrl} muted playsInline autoPlay loop preload="metadata" style={{ maxWidth:'100%', maxHeight:220, borderRadius:8 }} />
+                        ) : (
+                          <img src={mediaUrl} alt="preview" loading="lazy" decoding="async" style={{ maxWidth:'100%', maxHeight:220, borderRadius:8 }} />
+                        )
+                      ) : (
+                        <div className="small muted">No media</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
           <div className="card" style={{ padding:12 }}>
             <h3 style={{ marginTop:0 }}>Ribbon Items</h3>
             {ribbonItems.length === 0 && <div className="small muted">No ribbon items yet</div>}
             <div className="stack" style={{ gap:8 }}>
               {ribbonItems.map((it, idx) => (
-                <div key={it.id} className="row" style={{ gap:8, alignItems:'center', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:8 }}>
+                <div
+                  key={it.id}
+                  className="row"
+                  style={{ gap:8, alignItems:'center', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:8, background: ribbonSelectedIndex===idx ? 'rgba(0,0,0,0.04)' : 'transparent', cursor:'grab' }}
+                  draggable
+                  onDragStart={()=>onRibbonDragStart(idx)}
+                  onDragOver={(e)=>onRibbonDragOver(e, idx)}
+                  onDrop={(e)=>onRibbonDrop(e, idx)}
+                  onClick={()=>setRibbonSelectedIndex(idx)}
+                >
                   <span className="pill">{idx+1}</span>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontWeight:700, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{it.title || '(no title)'}</div>
