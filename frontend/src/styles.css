@@ -205,7 +205,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .promo-carousel.compact{margin-top:-16px}
   /* mobile full viewport still applies */
   /* tighten search widget spacing under ribbon */
-  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:8px}
+  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:12px}
   /* categories closer to search */
   .home-container .category-select{margin:6px 0}
   .home-container .category-chips{margin:6px 0; gap:8px; padding:4px 0}
@@ -249,7 +249,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .toolbar{flex-direction:column;align-items:stretch}
   /* Home: minimize gaps around search and categories */
   .home-container .toolbar{margin:2px 0}
-  .home .promo-carousel{margin-top:-8px}
+  .home .promo-carousel{margin-top:-12px}
   /* restore header bottom padding on home to default mobile size */
   .home .header-inner{padding-bottom:14px}
   /* increase header height on phones (~1.5x) */
