@@ -12,6 +12,8 @@ import paymentsRoutes from './routes/payments.routes.js';
 import vendorRoutes from './routes/vendor.routes.js';
 import reviewsRoutes from './routes/reviews.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import ribbonRoutes from './routes/ribbon.routes.js';
+import ribbonAdminRoutes from './routes/ribbon.admin.routes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import path from 'path';
 import profileRoutes from './routes/profile.routes.js';
@@ -60,6 +62,9 @@ app.use('/api/vendor', vendorRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile', profileRoutes);
+// Ribbon routes: public and admin
+app.use('/api/ribbon', ribbonRoutes);
+app.use('/api/admin/ribbon', ribbonAdminRoutes);
 
 // static uploads (enable CORS for image assets)
 app.use('/uploads', cors({ origin: corsDevCheck, credentials: true }), express.static(path.join(process.cwd(), 'uploads')));
