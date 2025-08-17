@@ -22,7 +22,8 @@ export default function PromoCarousel({ items, className }) {
 
   const trackRef = useRef(null);
   const [index, setIndex] = useState(1); // start at the first real slide
-  const [transition, setTransition] = useState(true);
+  // start with transitions off to avoid initial flash/jump
+  const [transition, setTransition] = useState(false);
   const [isHover, setIsHover] = useState(false);
 
   // Autoplay
@@ -97,7 +98,7 @@ export default function PromoCarousel({ items, className }) {
           ref={trackRef}
           style={{
             transform: `translateX(-${index * 100}%)`,
-            transition: transition ? 'transform .45s ease' : 'none'
+            transition: transition ? 'transform .35s ease' : 'none'
           }}
           onTransitionEnd={onTransitionEnd}
         >
@@ -105,7 +106,7 @@ export default function PromoCarousel({ items, className }) {
             <div className="pc-slide" key={idx}>
               <a className="pc-card" href={item.link || '#'} style={{ background: item.bg || undefined }}>
                 {item.image ? (
-                  <img src={item.image} alt={item.title || 'promo'} />
+                  <img src={item.image} alt={item.title || 'promo'} loading="eager" decoding="async" />
                 ) : (
                   <div className="pc-content">
                     <div className="pc-title">{item.title}</div>

@@ -160,14 +160,18 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .admin .thumb{width:48px;height:48px;object-fit:cover;border-radius:8px}
 
 /* Promo Carousel */
-.promo-carousel{width:100%; margin:0 0 10px}
+.promo-carousel{width:100%; margin:0 0 4px}
+/* try to touch header by pulling up slightly; adjust if header adds spacing */
 .promo-carousel.compact{margin-top:-24px}
-.pc-viewport{position:relative; overflow:hidden; border-radius:16px}
+/* edge-to-edge option for pages with horizontal padding */
+.promo-carousel.full-bleed{margin-left:-16px; margin-right:-16px}
+.pc-viewport{position:relative; overflow:hidden; border-radius:12px; background:transparent}
 .pc-track{display:flex; width:100%; will-change:transform}
-.pc-slide{flex:0 0 100%; padding:0 2px}
+.pc-slide{flex:0 0 100%; padding:0}
 .pc-card{display:block; width:100%; min-height:48px; max-height:72px; height:56px; /* thin ribbon height */
-  color:white; text-decoration:none; border-radius:14px; overflow:hidden;
-  box-shadow:0 4px 12px rgba(0,0,0,.12); position:relative}
+  color:white; text-decoration:none; border-radius:12px; overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.12); position:relative;
+  background:linear-gradient(135deg, rgba(91,124,250,.9), rgba(127,83,172,.9))}
 .pc-card img{width:100%; height:100%; object-fit:cover; display:block}
 .pc-content{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:18px}
 .pc-title{font-weight:800; font-size:14px; letter-spacing:.2px}
@@ -179,13 +183,14 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .pc-viewport:hover .pc-nav{display:flex}
 
 .pc-dots{display:flex; gap:6px; justify-content:center; margin-top:6px}
-.pc-dot{width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.35); border:1px solid rgba(0,0,0,.18)}
-.pc-dot.active{background:var(--primary)}
+.pc-dot{width:16px; height:3px; border-radius:2px; background:rgba(255,255,255,.35); border:0; transition:background .2s ease, width .2s ease}
+.pc-dot.active{background:var(--primary); width:22px}
 
 @media (max-width:720px){
-  .pc-card{height:60px; min-height:52px; max-height:68px}
-  .promo-carousel{margin:0 0 8px}
+  .pc-card{height:56px; min-height:50px; max-height:64px}
+  .promo-carousel{margin:0 0 4px}
   .promo-carousel.compact{margin-top:-16px}
+  .promo-carousel.full-bleed{margin-left:-12px; margin-right:-12px}
 }
 
 /* Utility */
