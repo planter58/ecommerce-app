@@ -37,6 +37,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 /* Header */
 .header{position:sticky;top:0;z-index:20;background:color-mix(in oklab, var(--panel) 70%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 6px 24px rgba(2,6,23,.18)}
 .header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px}
+.home .header{border-bottom:none}
+.home .header-inner{padding-bottom:0}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
 .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 18px color-mix(in oklab, var(--primary) 70%, transparent)}
 .nav{display:flex;gap:18px}
@@ -108,7 +110,9 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 
 /* Category chips (mobile) */
 .category-select{margin:8px 0}
+.home-container .category-select{margin:4px 0}
 .category-chips{display:none;gap:8px;overflow:auto;padding:4px 2px;margin:8px 0}
+.home-container .category-chips{margin:4px 0}
 .category-chips .chip{flex:0 0 auto;border:1px solid rgba(0,0,0,.08);background:var(--ghost-bg);color:var(--text);padding:6px 10px;border-radius:999px;cursor:pointer;font-size:.9rem;line-height:1}
 .category-chips .chip.active{background:var(--primary);color:white;border-color:transparent}
 
