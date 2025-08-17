@@ -160,30 +160,32 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .admin .thumb{width:48px;height:48px;object-fit:cover;border-radius:8px}
 
 /* Promo Carousel */
-.promo-carousel{width:100%; margin:10px 0 16px}
+.promo-carousel{width:100%; margin:0 0 10px}
+.promo-carousel.compact{margin-top:-24px}
 .pc-viewport{position:relative; overflow:hidden; border-radius:16px}
 .pc-track{display:flex; width:100%; will-change:transform}
 .pc-slide{flex:0 0 100%; padding:0 2px}
-.pc-card{display:block; width:100%; min-height:120px; max-height:220px; height:22vw; /* responsive height */
-  color:white; text-decoration:none; border-radius:16px; overflow:hidden;
-  box-shadow:0 8px 28px rgba(0,0,0,.25); position:relative}
+.pc-card{display:block; width:100%; min-height:48px; max-height:72px; height:56px; /* thin ribbon height */
+  color:white; text-decoration:none; border-radius:14px; overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.12); position:relative}
 .pc-card img{width:100%; height:100%; object-fit:cover; display:block}
 .pc-content{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:18px}
-.pc-title{font-weight:900; font-size:clamp(16px, 2.4vw, 24px); letter-spacing:.3px}
-.pc-text{margin-top:6px; opacity:.95; font-size:clamp(12px, 1.6vw, 14px)}
+.pc-title{font-weight:800; font-size:14px; letter-spacing:.2px}
+.pc-text{display:none}
 
-.pc-nav{position:absolute; top:50%; transform:translateY(-50%); z-index:2; background:rgba(0,0,0,.35); color:#fff; border:none; width:34px; height:34px; border-radius:999px; cursor:pointer; display:none; align-items:center; justify-content:center}
+.pc-nav{position:absolute; top:50%; transform:translateY(-50%); z-index:2; background:rgba(0,0,0,.28); color:#fff; border:none; width:28px; height:28px; border-radius:999px; cursor:pointer; display:none; align-items:center; justify-content:center}
 .pc-prev{left:8px}
 .pc-next{right:8px}
 .pc-viewport:hover .pc-nav{display:flex}
 
-.pc-dots{display:flex; gap:6px; justify-content:center; margin-top:8px}
-.pc-dot{width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.35); border:1px solid rgba(0,0,0,.2)}
+.pc-dots{display:flex; gap:6px; justify-content:center; margin-top:6px}
+.pc-dot{width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.35); border:1px solid rgba(0,0,0,.18)}
 .pc-dot.active{background:var(--primary)}
 
 @media (max-width:720px){
-  .pc-card{height:32vw; min-height:120px; max-height:180px}
-  .promo-carousel{margin:6px 0 10px}
+  .pc-card{height:60px; min-height:52px; max-height:68px}
+  .promo-carousel{margin:0 0 8px}
+  .promo-carousel.compact{margin-top:-16px}
 }
 
 /* Utility */

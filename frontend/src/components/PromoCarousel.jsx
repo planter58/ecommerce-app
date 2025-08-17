@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 // A reusable promotional carousel with auto-scroll, swipe, infinite loop, and dots
-export default function PromoCarousel({ items }) {
+export default function PromoCarousel({ items, className }) {
   const defaultItems = useMemo(() => (
     [
       { id: 'p1', title: 'Mega Sale • Up to 50% Off', image: null, bg: 'linear-gradient(135deg,#5b7cfa,#7f53ac)', text: 'Shop now and save big on top categories', link: '#' },
@@ -90,7 +90,7 @@ export default function PromoCarousel({ items }) {
   }, [index, data.length]);
 
   return (
-    <div className="promo-carousel" onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>
+    <div className={(className ? `promo-carousel ${className}` : 'promo-carousel')} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>
       <div className="pc-viewport" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
         <div
           className="pc-track"

@@ -188,7 +188,7 @@ export default function Home() {
 
   return (
     <div>
-      <PromoCarousel />
+      <PromoCarousel className="compact" />
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
       <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'layout paint' }}>
