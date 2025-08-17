@@ -254,13 +254,13 @@ export default function AdminDashboard() {
 
   // Ribbon Manager logic
   const loadRibbon = async () => {
-    try { const { data } = await api.get('/admin/ribbon'); setRibbonItems(data || []); } catch { setRibbonItems([]); }
+    try { const { data } = await api.get('/api/admin/ribbon'); setRibbonItems(data || []); } catch { setRibbonItems([]); }
   };
   const createRibbon = async (e) => {
     e.preventDefault();
     const payload = { ...ribbonForm };
     try {
-      const { data } = await api.post('/admin/ribbon', payload);
+      const { data } = await api.post('/api/admin/ribbon', payload);
       setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
       await loadRibbon();
       if (ribbonUploadFile) {
@@ -271,13 +271,13 @@ export default function AdminDashboard() {
     } catch {}
   };
   const saveRibbon = async (id) => {
-    try { await api.put(`/admin/ribbon/${id}`, ribbonForm); setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); await loadRibbon(); } catch {}
+    try { await api.put(`/api/admin/ribbon/${id}`, ribbonForm); setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); await loadRibbon(); } catch {}
   };
   const editRibbon = (it) => { setRibbonEditingId(it.id); setRibbonForm({ title: it.title||'', body: it.body||'', cta_label: it.cta_label||'', cta_url: it.cta_url||'', media_type: it.media_type||'' }); };
   const cancelRibbonEdit = () => { setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); };
-  const toggleRibbon = async (id, enabled) => { try { await api.patch(`/admin/ribbon/${id}/enable`, { enabled }); await loadRibbon(); } catch {} };
-  const deleteRibbon = async (id) => { try { await api.delete(`/admin/ribbon/${id}`); await loadRibbon(); } catch {} };
-  const reorderRibbon = async (items) => { try { await api.patch('/admin/ribbon/reorder', { items: items.map((x,i)=>({ id:x.id, position: i+1 })) }); } catch {} };
+  const toggleRibbon = async (id, enabled) => { try { await api.patch(`/api/admin/ribbon/${id}/enable`, { enabled }); await loadRibbon(); } catch {} };
+  const deleteRibbon = async (id) => { try { await api.delete(`/api/admin/ribbon/${id}`); await loadRibbon(); } catch {} };
+  const reorderRibbon = async (items) => { try { await api.patch('/api/admin/ribbon/reorder', { items: items.map((x,i)=>({ id:x.id, position: i+1 })) }); } catch {} };
   const moveRibbonUp = async (idx) => {
     if (idx <= 0) return;
     setRibbonItems(list => {
@@ -302,7 +302,7 @@ export default function AdminDashboard() {
     if (!file) return;
     const fd = new FormData();
     fd.append('media', file);
-    await api.post(`/admin/ribbon/${id}/media`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    await api.post(`/api/admin/ribbon/${id}/media`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   };
 
   return (
