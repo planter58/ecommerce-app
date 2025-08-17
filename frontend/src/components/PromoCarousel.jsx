@@ -10,7 +10,26 @@ export default function PromoCarousel({ items, className }) {
     ]
   ), []);
 
-  const data = items?.length ? items : defaultItems;
+  // Fetch from public API if items not provided
+  const [serverItems, setServerItems] = useState(null);
+  useEffect(() => {
+    let mounted = true;
+    if (!items) {
+      (async () => {
+        try {
+          const res = await fetch('/api/ribbon', { credentials: 'same-origin' });
+          if (!res.ok) throw new Error('Failed to load ribbon');
+          const data = await res.json();
+          if (mounted) setServerItems(Array.isArray(data) ? data : []);
+        } catch {
+          if (mounted) setServerItems([]);
+        }
+      })();
+    }
+    return () => { mounted = false; };
+  }, [items]);
+
+  const data = items?.length ? items : (serverItems && serverItems.length ? serverItems : defaultItems);
 
   // Infinite loop technique: clone first and last
   const extended = useMemo(() => {
@@ -102,28 +121,62 @@ export default function PromoCarousel({ items, className }) {
           }}
           onTransitionEnd={onTransitionEnd}
         >
-          {extended.map((item, idx) => (
-            <div className="pc-slide" key={idx}>
-              <a className="pc-card" href={item.link || '#'} style={{ background: item.bg || undefined }}>
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.title || 'promo'}
-                    loading="lazy"
-                    decoding="async"
-                    className="pc-img"
-                    style={{ opacity: 0, transition: 'opacity .18s ease' }}
-                    onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
-                  />
-                ) : (
-                  <div className="pc-content">
-                    <div className="pc-title">{item.title}</div>
-                    {item.text && <div className="pc-text">{item.text}</div>}
+          {extended.map((item, idx) => {
+            const title = item.title || item.heading || 'Promotion';
+            const body = item.body || item.text || '';
+            const ctaLabel = item.cta_label || item.cta || '';
+            const ctaUrl = item.cta_url || item.link || '#';
+            const mediaUrl = item.media_url || item.image || null;
+            const mediaType = item.media_type || (mediaUrl && mediaUrl.match(/\.mp4|\.webm|\.ogg/i) ? 'video' : (mediaUrl ? 'image' : ''));
+
+            return (
+              <div className="pc-slide" key={idx}>
+                <div className="pc-card" style={{ background: item.bg || 'var(--surface-2)' }}>
+                  <div className="pc-split" style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr', gap:16, alignItems:'center', width:'100%', height:'100%' }}>
+                    <div className="pc-split-left" style={{ padding:'12px 16px' }}>
+                      <div className="pc-title" style={{ marginBottom:6 }}>{title}</div>
+                      {body && <div className="pc-text" style={{ marginBottom:10 }}>{body}</div>}
+                      {ctaLabel && (
+                        <a href={ctaUrl} className="button" style={{ textDecoration:'none' }}>
+                          {ctaLabel}
+                        </a>
+                      )}
+                    </div>
+                    <div className="pc-split-right" style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', padding:'8px 12px' }}>
+                      {mediaUrl ? (
+                        mediaType === 'video' ? (
+                          <video
+                            src={mediaUrl}
+                            className="pc-media"
+                            style={{ maxWidth:'100%', maxHeight:'100%', borderRadius:8 }}
+                            muted
+                            playsInline
+                            autoPlay
+                            loop
+                            preload="metadata"
+                          />
+                        ) : (
+                          <img
+                            src={mediaUrl}
+                            alt={title}
+                            loading="lazy"
+                            decoding="async"
+                            className="pc-media"
+                            style={{ maxWidth:'100%', maxHeight:'100%', borderRadius:8, opacity:0, transition:'opacity .18s ease' }}
+                            onLoad={(e)=>{ e.currentTarget.style.opacity = '1'; }}
+                          />
+                        )
+                      ) : (
+                        <div className="pc-media-placeholder" style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--muted-2)' }}>
+                          No media
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </a>
-            </div>
-          ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
         {/* nav buttons (optional on desktop) */}
         <button className="pc-nav pc-prev" aria-label="Previous" onClick={prev}>
