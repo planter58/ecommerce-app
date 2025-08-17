@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   const [ribbonUploadFile, setRibbonUploadFile] = useState(null);
   const [ribbonDragIndex, setRibbonDragIndex] = useState(null);
   const [ribbonSelectedIndex, setRibbonSelectedIndex] = useState(0);
+  const [ribbonLoading, setRibbonLoading] = useState(false);
+  const [ribbonError, setRibbonError] = useState('');
 
   // Featured products state (super_admin only)
   const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
@@ -84,7 +86,12 @@ export default function AdminDashboard() {
   useEffect(() => { if (tab === 'vendors') loadPending(); }, [tab]);
   useEffect(() => { if (tab === 'admins' && user?.role === 'super_admin') loadAdmins(); }, [tab, adminQuery, adminStatus]);
   // Load ribbon items when Ribbon tab opens
-  useEffect(() => { if (tab === 'ribbon') loadRibbon(); }, [tab]);
+  useEffect(() => {
+    if (tab === 'ribbon') {
+      console.log('[Ribbon] Tab opened, loading items...');
+      loadRibbon();
+    }
+  }, [tab]);
 
   const loadFeaturedAdmin = async () => {
     try { const { data } = await api.get('/admin/featured'); setFeatured(data || []); } catch { setFeatured([]); }
@@ -272,13 +279,25 @@ export default function AdminDashboard() {
 
   // Ribbon Manager logic
   const loadRibbon = async () => {
-    try { const { data } = await api.get('/api/admin/ribbon'); setRibbonItems(data || []); } catch { setRibbonItems([]); }
+    setRibbonError('');
+    setRibbonLoading(true);
+    try {
+      const { data } = await api.get('/admin/ribbon');
+      console.log('[Ribbon] Loaded items:', data);
+      setRibbonItems(data || []);
+    } catch (e) {
+      console.error('[Ribbon] Load failed', e);
+      setRibbonError(e?.response?.data?.message || e?.message || 'Failed to load');
+      setRibbonItems([]);
+    } finally {
+      setRibbonLoading(false);
+    }
   };
   const createRibbon = async (e) => {
     e.preventDefault();
     const payload = { ...ribbonForm };
     try {
-      const { data } = await api.post('/api/admin/ribbon', payload);
+      const { data } = await api.post('/admin/ribbon', payload);
       setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
       await loadRibbon();
       if (ribbonUploadFile) {
@@ -289,13 +308,13 @@ export default function AdminDashboard() {
     } catch {}
   };
   const saveRibbon = async (id) => {
-    try { await api.put(`/api/admin/ribbon/${id}`, ribbonForm); setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); await loadRibbon(); } catch {}
+    try { await api.put(`/admin/ribbon/${id}`, ribbonForm); setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); await loadRibbon(); } catch {}
   };
   const editRibbon = (it) => { setRibbonEditingId(it.id); setRibbonForm({ title: it.title||'', body: it.body||'', cta_label: it.cta_label||'', cta_url: it.cta_url||'', media_type: it.media_type||'' }); };
   const cancelRibbonEdit = () => { setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); };
-  const toggleRibbon = async (id, enabled) => { try { await api.patch(`/api/admin/ribbon/${id}/enable`, { enabled }); await loadRibbon(); } catch {} };
-  const deleteRibbon = async (id) => { try { await api.delete(`/api/admin/ribbon/${id}`); await loadRibbon(); } catch {} };
-  const reorderRibbon = async (items) => { try { await api.patch('/api/admin/ribbon/reorder', { items: items.map((x,i)=>({ id:x.id, position: i+1 })) }); } catch {} };
+  const toggleRibbon = async (id, enabled) => { try { await api.patch(`/admin/ribbon/${id}/enable`, { enabled }); await loadRibbon(); } catch {} };
+  const deleteRibbon = async (id) => { try { await api.delete(`/admin/ribbon/${id}`); await loadRibbon(); } catch {} };
+  const reorderRibbon = async (items) => { try { await api.patch('/admin/ribbon/reorder', { items: items.map((x,i)=>({ id:x.id, position: i+1 })) }); } catch {} };
   const moveRibbonUp = async (idx) => {
     if (idx <= 0) return;
     setRibbonItems(list => {
@@ -320,7 +339,7 @@ export default function AdminDashboard() {
     if (!file) return;
     const fd = new FormData();
     fd.append('media', file);
-    await api.post(`/api/admin/ribbon/${id}/media`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    await api.post(`/admin/ribbon/${id}/media`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   };
 
   return (
@@ -579,7 +598,9 @@ export default function AdminDashboard() {
 
           <div className="card" style={{ padding:12 }}>
             <h3 style={{ marginTop:0 }}>Ribbon Items</h3>
-            {ribbonItems.length === 0 && <div className="small muted">No ribbon items yet</div>}
+            {ribbonLoading && <div className="small">Loading ribbon items…</div>}
+            {ribbonError && <div className="error" role="alert">{ribbonError}</div>}
+            {!ribbonLoading && !ribbonError && ribbonItems.length === 0 && <div className="small muted">No ribbon items yet</div>}
             <div className="stack" style={{ gap:8 }}>
               {ribbonItems.map((it, idx) => (
                 <div
