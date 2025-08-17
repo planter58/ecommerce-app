@@ -71,6 +71,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 
 /* Search & filters */
 .toolbar{display:flex;gap:12px;align-items:center;margin:18px 0}
+.home-container .toolbar{margin:10px 0}
 .input{width:100%;background:color-mix(in oklab, var(--panel) 70%, #000 10%);border:1px solid rgba(0,0,0,.08);color:var(--text);padding:10px 12px;border-radius:10px;outline:none}
 [data-theme="light"] .input{background:#f7f8fb;border-color:rgba(0,0,0,.06)}
 .select{background:color-mix(in oklab, var(--panel) 70%, #000 10%);border:1px solid rgba(0,0,0,.08);color:var(--text);padding:10px;border-radius:10px}
@@ -204,7 +205,10 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .promo-carousel.compact{margin-top:-16px}
   /* mobile full viewport still applies */
   /* tighten search widget spacing under ribbon */
-  .home-container .toolbar.searchbar{margin-top:4px}
+  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:2px}
+  /* categories closer to search */
+  .home-container .category-select{margin:1px 0}
+  .home-container .category-chips{margin:1px 0; gap:6px; padding:2px 0}
 }
 
 /* Utility */
@@ -241,6 +245,9 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 @media (max-width:720px){
   .container{padding:16px}
   .toolbar{flex-direction:column;align-items:stretch}
+  /* Home: minimize gaps around search and categories */
+  .home-container .toolbar{margin:2px 0}
+  .home .promo-carousel{margin-top:-4px}
   /* increase header height on phones (~1.5x) */
   .header-inner{padding:14px 14px}
   .button{padding:9px 12px}
