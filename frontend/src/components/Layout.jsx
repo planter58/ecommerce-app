@@ -185,7 +185,12 @@ export default function Layout({ children }) {
         </>
       )}
 
-      <main className="container" style={{ marginTop: 16 }}>{children}</main>
+      <main
+        className={"container" + (pathname === '/' ? ' home-container' : '')}
+        style={{ marginTop: pathname === '/' ? 0 : 16 }}
+      >
+        {children}
+      </main>
       {/* Mobile bottom navigation */}
       <MobileNav hidden={hideMobileNav} />
     </div>
