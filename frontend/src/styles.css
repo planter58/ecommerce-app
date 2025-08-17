@@ -249,7 +249,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .toolbar{flex-direction:column;align-items:stretch}
   /* Home: minimize gaps around search and categories */
   .home-container .toolbar{margin:2px 0}
-  .home .promo-carousel{margin-top:-6px}
+  .home .promo-carousel{margin-top:-8px}
   /* restore header bottom padding on home to default mobile size */
   .home .header-inner{padding-bottom:14px}
   /* increase header height on phones (~1.5x) */
