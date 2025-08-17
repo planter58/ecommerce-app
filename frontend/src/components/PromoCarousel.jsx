@@ -106,7 +106,15 @@ export default function PromoCarousel({ items, className }) {
             <div className="pc-slide" key={idx}>
               <a className="pc-card" href={item.link || '#'} style={{ background: item.bg || undefined }}>
                 {item.image ? (
-                  <img src={item.image} alt={item.title || 'promo'} loading="eager" decoding="async" />
+                  <img
+                    src={item.image}
+                    alt={item.title || 'promo'}
+                    loading="lazy"
+                    decoding="async"
+                    className="pc-img"
+                    style={{ opacity: 0, transition: 'opacity .18s ease' }}
+                    onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
+                  />
                 ) : (
                   <div className="pc-content">
                     <div className="pc-title">{item.title}</div>

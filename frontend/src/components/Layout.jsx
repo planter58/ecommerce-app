@@ -67,7 +67,7 @@ export default function Layout({ children }) {
     return 'User';
   })();
   return (
-    <div>
+    <div className={pathname === '/' ? 'home' : undefined}>
       <div className="header">
         <div className="header-inner container">
           {/* Desktop header */}
