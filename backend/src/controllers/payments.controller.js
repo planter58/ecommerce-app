@@ -96,6 +96,7 @@ export async function initiateMpesaStk(req, res, next) {
     const password = Buffer.from(`${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`).toString('base64');
     const token = await getMpesaAccessToken();
     const base = process.env.MPESA_ENV === 'production' ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke';
+    const callbackUrl = process.env.MPESA_CALLBACK_URL || 'https://ecommerce-app-z4wp.onrender.com/api/payments/mpesa/callback';
     const payload = {
       BusinessShortCode: process.env.MPESA_SHORTCODE,
       Password: password,
@@ -105,7 +106,7 @@ export async function initiateMpesaStk(req, res, next) {
       PartyA: phone,
       PartyB: process.env.MPESA_SHORTCODE,
       PhoneNumber: phone,
-      CallBackURL: process.env.MPESA_CALLBACK_URL,
+      CallBackURL: callbackUrl,
       AccountReference: `ORDER-${order.id}`,
       TransactionDesc: `Order ${order.id}`
     };
