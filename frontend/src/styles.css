@@ -37,8 +37,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 /* Header */
 .header{position:sticky;top:0;z-index:20;background:color-mix(in oklab, var(--panel) 70%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 6px 24px rgba(2,6,23,.18)}
 .header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px}
-.home .header{border-bottom:none}
-.home .header-inner{padding-bottom:0}
+.home .header{border-bottom:1px solid rgba(0,0,0,.08)}
+.home .header-inner{padding-bottom:16px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
 .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 18px color-mix(in oklab, var(--primary) 70%, transparent)}
 .nav{display:flex;gap:18px}
@@ -205,10 +205,12 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .promo-carousel.compact{margin-top:-16px}
   /* mobile full viewport still applies */
   /* tighten search widget spacing under ribbon */
-  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:2px}
+  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:8px}
   /* categories closer to search */
-  .home-container .category-select{margin:1px 0}
-  .home-container .category-chips{margin:1px 0; gap:6px; padding:2px 0}
+  .home-container .category-select{margin:6px 0}
+  .home-container .category-chips{margin:6px 0; gap:8px; padding:4px 0}
+  /* a bit more space before products grid */
+  .home-container .grid{margin-top:8px}
 }
 
 /* Utility */
@@ -247,7 +249,9 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .toolbar{flex-direction:column;align-items:stretch}
   /* Home: minimize gaps around search and categories */
   .home-container .toolbar{margin:2px 0}
-  .home .promo-carousel{margin-top:-4px}
+  .home .promo-carousel{margin-top:-6px}
+  /* restore header bottom padding on home to default mobile size */
+  .home .header-inner{padding-bottom:14px}
   /* increase header height on phones (~1.5x) */
   .header-inner{padding:14px 14px}
   .button{padding:9px 12px}
