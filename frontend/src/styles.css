@@ -31,6 +31,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .container{max-width:1200px;margin:0 auto;padding:24px}
 /* Home layout: remove top padding so ribbon touches header */
 .home-container{padding-top:0}
+/* ensure no accidental top margin on first child on home */
+.home-container > :first-child{margin-top:0}
 
 /* Header */
 .header{position:sticky;top:0;z-index:20;background:color-mix(in oklab, var(--panel) 70%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 6px 24px rgba(2,6,23,.18)}
@@ -163,6 +165,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 
 /* Promo Carousel */
 .promo-carousel{width:100%; margin:0 0 2px}
+/* explicitly kill any top margin on ribbon on all breakpoints */
+.promo-carousel{margin-top:0 !important}
 /* pull up to touch header if the page has top padding */
 .promo-carousel.compact{margin-top:-24px}
 /* make the ribbon span full viewport width, centered (no left/right bias) */
@@ -184,15 +188,19 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .pc-next{right:8px}
 .pc-viewport:hover .pc-nav{display:flex}
 
-.pc-dots{display:flex; gap:6px; justify-content:center; margin-top:6px}
-.pc-dot{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.42); border:0; transition:opacity .2s ease, transform .2s ease}
-.pc-dot.active{background:var(--primary); transform:scale(1.1)}
+.pc-dots{display:flex; gap:8px; justify-content:center; margin-top:6px; position:relative; z-index:2}
+.pc-dot{width:7px; height:7px; border-radius:50%; background:color-mix(in oklab, var(--text) 30%, transparent); opacity:.7; border:0; transition:opacity .2s ease, transform .2s ease}
+.pc-dot.active{background:var(--primary); opacity:1; transform:scale(1.1)}
+[data-theme="light"] .pc-dot{background:rgba(0,0,0,.25)}
+[data-theme="light"] .pc-dot.active{background:var(--primary)}
 
 @media (max-width:720px){
   .pc-card{height:56px; min-height:50px; max-height:64px}
-  .promo-carousel{margin:0 0 6px}
+  .promo-carousel{margin:0 0 2px}
   .promo-carousel.compact{margin-top:-16px}
   /* mobile full viewport still applies */
+  /* tighten search widget spacing under ribbon */
+  .home-container .toolbar.searchbar{margin-top:4px}
 }
 
 /* Utility */
