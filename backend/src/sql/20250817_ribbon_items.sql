@@ -1,6 +1,6 @@
 -- Ribbon items for promotional banner
 CREATE TABLE IF NOT EXISTS ribbon_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT,
   body TEXT,
   cta_label TEXT,
