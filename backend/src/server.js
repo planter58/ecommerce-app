@@ -8,6 +8,7 @@ loadEnv();
 if (process.env.AUTO_MIGRATE === 'true') {
   try {
     const files = [
+      '../create_extensions.sql',
       'sql/schema.sql',
       'sql/20250812_vendor.sql',
       'sql/20250813_user_status.sql',
@@ -16,6 +17,7 @@ if (process.env.AUTO_MIGRATE === 'true') {
       'sql/20250813_user_profile.sql',
       'sql/20250812_product_images.sql',
       'sql/20250813_was_admin.sql',
+      'sql/20250817_ribbon_items.sql',
     ];
     console.log('AUTO_MIGRATE=true: applying migrations...');
     for (const f of files) {
