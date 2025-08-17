@@ -205,7 +205,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .promo-carousel.compact{margin-top:-16px}
   /* mobile full viewport still applies */
   /* tighten search widget spacing under ribbon */
-  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:12px}
+  .home-container .toolbar.searchbar{margin-top:0; margin-bottom:14px}
   /* categories closer to search */
   .home-container .category-select{margin:6px 0}
   .home-container .category-chips{margin:6px 0; gap:8px; padding:4px 0}
@@ -246,10 +246,13 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .mobile-full{width:100%}
 @media (max-width:720px){
   .container{padding:16px}
+  /* On home, remove top padding that container adds on mobile */
+  .home-container{padding-top:0 !important}
   .toolbar{flex-direction:column;align-items:stretch}
   /* Home: minimize gaps around search and categories */
   .home-container .toolbar{margin:2px 0}
-  .home .promo-carousel{margin-top:-12px}
+  /* Force ribbon to touch header without altering header size */
+  .home .promo-carousel{margin-top:-16px !important}
   /* restore header bottom padding on home to default mobile size */
   .home .header-inner{padding-bottom:14px}
   /* increase header height on phones (~1.5x) */
