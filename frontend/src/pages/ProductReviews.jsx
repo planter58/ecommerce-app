@@ -14,6 +14,7 @@ export default function ProductReviews() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ rating: 5, comment: '' });
   const [error, setError] = useState('');
+  const hasReviewed = !!(user && reviews && reviews.some(r => (r.user_id === user.id) || (r.userId === user.id) || (r.user && r.user.id === user.id)));
 
   const load = async () => {
     setLoading(true);
@@ -38,6 +39,10 @@ export default function ProductReviews() {
     setError('');
     if (!user) {
       navigate('/login', { replace: false });
+      return;
+    }
+    if (hasReviewed) {
+      setError('You have already submitted a review for this product.');
       return;
     }
     if (!form.rating || form.rating < 1 || form.rating > 5) {
@@ -98,7 +103,12 @@ export default function ProductReviews() {
             <Link to="/login">Login</Link> to post a review.
           </div>
         )}
-        <form onSubmit={onSubmit} className="card" style={{ padding: 12, maxWidth: 640 }}>
+        {hasReviewed && (
+          <div className="card" style={{ padding: 12, maxWidth: 640, marginBottom: 12 }}>
+            <div className="small">You have already reviewed this product. Thank you!</div>
+          </div>
+        )}
+        <form onSubmit={onSubmit} className="card" style={{ padding: 12, maxWidth: 640, opacity: hasReviewed ? 0.6 : 1, pointerEvents: hasReviewed ? 'none' : 'auto' }}>
           {error && <div className="error" style={{ color: 'crimson', marginBottom: 8 }}>{error}</div>}
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <label htmlFor="rating">Rating:</label>
@@ -108,6 +118,7 @@ export default function ProductReviews() {
               onChange={(e)=>setForm(f=>({ ...f, rating: Number(e.target.value) }))}
               className="input"
               style={{ width: 80 }}
+              disabled={hasReviewed}
             >
               {[5,4,3,2,1].map(v => <option key={v} value={v}>{v}</option>)}
             </select>
@@ -122,10 +133,11 @@ export default function ProductReviews() {
               onChange={(e)=>setForm(f=>({ ...f, comment: e.target.value }))}
               placeholder="Share your experience with this product"
               style={{ width: '100%', resize: 'vertical' }}
+              disabled={hasReviewed}
             />
           </div>
           <div className="mt-12">
-            <button className="button" type="submit" disabled={submitting}>{submitting ? 'Submitting...' : 'Submit Review'}</button>
+            <button className="button" type="submit" disabled={submitting || hasReviewed}>{submitting ? 'Submitting...' : 'Submit Review'}</button>
           </div>
         </form>
       </div>
