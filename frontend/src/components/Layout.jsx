@@ -25,7 +25,7 @@ export default function Layout({ children }) {
 
   // Hide/show mobile footer on scroll (down hides, up shows) with rAF + idle reveal
   useEffect(() => {
-    const threshold = 3; // pixels to consider a direction change
+    const threshold = 2; // pixels to consider a direction change
     const onScroll = () => {
       if (window.innerWidth > 720) return; // only mobile
       const schedule = () => {
@@ -38,8 +38,8 @@ export default function Layout({ children }) {
           const goingUp = y < lastYRef.current - threshold;
           lastYRef.current = y;
 
-          // Always show at extremes or near top
-          if (y < 12 || y >= maxY - 4) {
+          // Always show only at extremes (top or bottom)
+          if (y <= 0 || y >= maxY - 1) {
             setHideMobileNav(false);
           } else if (goingDown) {
             setHideMobileNav(true);
@@ -51,7 +51,7 @@ export default function Layout({ children }) {
           if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
           idleTimerRef.current = setTimeout(() => {
             setHideMobileNav(false);
-          }, 700);
+          }, 1000);
 
           tickingRef.current = false;
         });
