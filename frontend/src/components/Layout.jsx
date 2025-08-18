@@ -53,7 +53,7 @@ export default function Layout({ children }) {
           if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
           idleTimerRef.current = setTimeout(() => {
             setHideMobileNav(false);
-          }, 1000);
+          }, 8000);
 
           tickingRef.current = false;
         });
@@ -93,7 +93,7 @@ export default function Layout({ children }) {
         setHideMobileNav(false);
       }
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = setTimeout(() => setHideMobileNav(false), 1000);
+      idleTimerRef.current = setTimeout(() => setHideMobileNav(false), 8000);
     };
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
