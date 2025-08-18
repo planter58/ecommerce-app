@@ -16,15 +16,22 @@ export async function listProductReviews(req, res, next) {
 export async function addProductReview(req, res, next) {
   try {
     const { rating, comment } = req.body;
-    // ensure user purchased item
-    const { rows: owns } = await query(
-      `SELECT 1
-       FROM orders o
-       JOIN order_items oi ON oi.order_id = o.id
-       WHERE o.user_id=$1 AND oi.product_id=$2
-       LIMIT 1`, [req.user.id, req.params.productId]
-    );
-    if (!owns[0]) return res.status(403).json({ message: 'You can only review items you purchased' });
+    const rInt = parseInt(rating, 10);
+    if (!rInt || rInt < 1 || rInt > 5) {
+      return res.status(400).json({ message: 'Rating must be an integer between 1 and 5' });
+    }
+    const requirePurchase = process.env.REQUIRE_PURCHASE_FOR_REVIEW === 'true';
+    if (requirePurchase) {
+      // ensure user purchased item (optional via env flag)
+      const { rows: owns } = await query(
+        `SELECT 1
+         FROM orders o
+         JOIN order_items oi ON oi.order_id = o.id
+         WHERE o.user_id=$1 AND oi.product_id=$2
+         LIMIT 1`, [req.user.id, req.params.productId]
+      );
+      if (!owns[0]) return res.status(403).json({ message: 'You can only review items you purchased' });
+    }
     const { rows } = await query(
       `INSERT INTO reviews (user_id, product_id, rating, comment)
        VALUES ($1,$2,$3,$4)
@@ -32,7 +39,7 @@ export async function addProductReview(req, res, next) {
          rating=EXCLUDED.rating,
          comment=EXCLUDED.comment,
          created_at=NOW()
-       RETURNING *`, [req.user.id, req.params.productId, rating, comment || null]
+       RETURNING *`, [req.user.id, req.params.productId, rInt, (comment && String(comment).trim()) || null]
     );
     res.status(201).json(rows[0]);
   } catch (e) { next(e); }

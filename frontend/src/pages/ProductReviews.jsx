@@ -45,7 +45,8 @@ export default function ProductReviews() {
       setError('You have already submitted a review for this product.');
       return;
     }
-    if (!form.rating || form.rating < 1 || form.rating > 5) {
+    const ratingInt = parseInt(form.rating, 10);
+    if (!ratingInt || ratingInt < 1 || ratingInt > 5) {
       setError('Please select a rating between 1 and 5.');
       return;
     }
@@ -55,11 +56,13 @@ export default function ProductReviews() {
     }
     setSubmitting(true);
     try {
-      await addProductReview(id, { rating: form.rating, comment: form.comment.trim() });
+      await addProductReview(id, { rating: ratingInt, comment: form.comment.trim() });
       setForm({ rating: 5, comment: '' });
       await load();
-    } catch (e) {
-      setError('Could not submit review. Please try again.');
+    } catch (err) {
+      console.error('[Reviews] submit error', err);
+      const msg = err?.response?.data?.message || err?.message || 'Could not submit review. Please try again.';
+      setError(msg);
     } finally {
       setSubmitting(false);
     }

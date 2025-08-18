@@ -118,11 +118,12 @@ export default function ProductDetails() {
                       const avg = Number(product.avg_rating || 0);
                       const fixed2 = avg.toFixed(2);
                       const display = avg === 0 ? '0' : (fixed2.endsWith('00') ? String(Math.trunc(avg)) : String(parseFloat(fixed2)));
+                      const count = product.rating_count || 0;
                       return (
                         <>
                           <span style={{ color:'#f5b50a', fontSize: 18 }}>{'⭐'.repeat(Math.round(avg))}</span>
                           <span style={{ color: avg === 0 ? '#888' : undefined }}><strong>{display}</strong></span>
-                          <span>Customers reviews {product.rating_count || 0}</span>
+                          <span style={{ marginLeft: 10, color:'#3b82f6' }}>({count}) Customers reviews</span>
                         </>
                       );
                     })()}
@@ -202,11 +203,12 @@ export default function ProductDetails() {
                     const avg = Number(product.avg_rating || 0);
                     const fixed2 = avg.toFixed(2);
                     const display = avg === 0 ? '0' : (fixed2.endsWith('00') ? String(Math.trunc(avg)) : String(parseFloat(fixed2)));
+                    const count = product.rating_count || 0;
                     return (
                       <>
                         <span style={{ color:'#f5b50a', fontSize: 18 }}>{'⭐'.repeat(Math.round(avg))}</span>
                         <span style={{ color: avg === 0 ? '#888' : undefined }}><strong>{display}</strong></span>
-                        <span>Customers reviews {product.rating_count || 0}</span>
+                        <span style={{ marginLeft: 10, color:'#3b82f6' }}>({count}) Customers reviews</span>
                       </>
                     );
                   })()}
