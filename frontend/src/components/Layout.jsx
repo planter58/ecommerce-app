@@ -16,25 +16,53 @@ export default function Layout({ children }) {
   const [pendingCount, setPendingCount] = useState(0);
   const [hideMobileNav, setHideMobileNav] = useState(false);
   const lastYRef = useRef(window.scrollY || 0);
+  const tickingRef = useRef(false);
+  const idleTimerRef = useRef(null);
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Hide/show mobile footer on scroll (down hides, up shows)
+  // Hide/show mobile footer on scroll (down hides, up shows) with rAF + idle reveal
   useEffect(() => {
+    const threshold = 3; // pixels to consider a direction change
     const onScroll = () => {
-      const y = window.scrollY || 0;
-      const goingDown = y > lastYRef.current + 4;
-      const goingUp = y < lastYRef.current - 4;
-      lastYRef.current = y;
-      if (window.innerWidth <= 720) {
-        if (goingDown) setHideMobileNav(true);
-        else if (goingUp) setHideMobileNav(false);
-      }
+      if (window.innerWidth > 720) return; // only mobile
+      const schedule = () => {
+        if (tickingRef.current) return;
+        tickingRef.current = true;
+        requestAnimationFrame(() => {
+          const y = window.scrollY || 0;
+          const maxY = document.documentElement.scrollHeight - window.innerHeight;
+          const goingDown = y > lastYRef.current + threshold;
+          const goingUp = y < lastYRef.current - threshold;
+          lastYRef.current = y;
+
+          // Always show at extremes or near top
+          if (y < 12 || y >= maxY - 4) {
+            setHideMobileNav(false);
+          } else if (goingDown) {
+            setHideMobileNav(true);
+          } else if (goingUp) {
+            setHideMobileNav(false);
+          }
+
+          // Auto-show after user stops scrolling for a moment
+          if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+          idleTimerRef.current = setTimeout(() => {
+            setHideMobileNav(false);
+          }, 700);
+
+          tickingRef.current = false;
+        });
+      };
+      schedule();
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
   }, []);
   useEffect(() => {
     let timer;
