@@ -27,7 +27,7 @@ export default function Layout({ children }) {
   useEffect(() => {
     const threshold = 2; // pixels to consider downward intent
     const onScroll = () => {
-      if (window.innerWidth > 720) return; // only mobile
+      if (window.innerWidth > 768) return; // only mobile (<=768px)
       const schedule = () => {
         if (tickingRef.current) return;
         tickingRef.current = true;

@@ -292,7 +292,7 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .mobile-nav .icon{font-size:14px}
 .mobile-nav .label{font-size:.68rem}
 .mobile-nav .badge.sm{position:absolute;top:0;right:6px;transform:translateY(-30%);min-width:18px;height:18px;font-size:.7rem}
-@media (max-width:720px){
+@media (max-width:768px){
   .mobile-nav{display:flex}
   /* show mobile header pieces */
   .desktop-only{display:none}
