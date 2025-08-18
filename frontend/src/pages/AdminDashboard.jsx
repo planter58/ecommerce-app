@@ -42,6 +42,7 @@ export default function AdminDashboard() {
   const [ribbonLoading, setRibbonLoading] = useState(false);
   const [ribbonError, setRibbonError] = useState('');
   const ribbonSectionRef = useRef(null);
+  const ribbonScrollTriesRef = useRef(0);
 
   // Featured products state (super_admin only)
   const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
@@ -92,9 +93,20 @@ export default function AdminDashboard() {
       console.log('[Ribbon] Tab opened, loading items...');
       loadRibbon();
       // ensure the Ribbon section is brought into view on mobile/desktop
-      setTimeout(() => {
-        try { ribbonSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
-      }, 0);
+      const tryScroll = () => {
+        if (!ribbonSectionRef.current) return;
+        try {
+          ribbonSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          console.log('[Ribbon] scrollIntoView attempted');
+        } catch {}
+        if (ribbonScrollTriesRef.current < 4) {
+          ribbonScrollTriesRef.current += 1;
+          requestAnimationFrame(tryScroll);
+        } else {
+          ribbonScrollTriesRef.current = 0;
+        }
+      };
+      requestAnimationFrame(tryScroll);
     }
   }, [tab]);
 
@@ -541,6 +553,9 @@ export default function AdminDashboard() {
 
       {tab === 'ribbon' && (
         <section ref={ribbonSectionRef} className="stack" style={{ gap:12 }}>
+          <div className="card" style={{ padding:10, border:'1px dashed rgba(255,255,255,.25)' }}>
+            <strong>Ribbon Debug:</strong> Section rendered. If you don't see list items, create one using the form below. Check Console for "[Ribbon]" logs.
+          </div>
           <div className="card" style={{ padding:12 }}>
             <h3 style={{ marginTop:0 }}>{ribbonEditingId ? 'Edit Ribbon Item' : 'Create Ribbon Item'}</h3>
             <form className="grid" style={{ gridTemplateColumns:'1fr 1fr', gap:8 }} onSubmit={ribbonEditingId ? (e)=>{ e.preventDefault(); saveRibbon(ribbonEditingId);} : createRibbon}>
