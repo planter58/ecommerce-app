@@ -18,6 +18,7 @@ export default function Layout({ children }) {
   const lastYRef = useRef(window.scrollY || 0);
   const tickingRef = useRef(false);
   const idleTimerRef = useRef(null);
+  const touchLastYRef = useRef(null);
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
@@ -63,6 +64,42 @@ export default function Layout({ children }) {
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, []);
+
+  // Also handle touch gestures directly (useful when scrollY updates late with sticky headers/ribbon)
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      if (window.innerWidth > 768) return;
+      if (e.touches && e.touches.length) {
+        touchLastYRef.current = e.touches[0].clientY;
+      }
+    };
+    const onTouchMove = (e) => {
+      if (window.innerWidth > 768) return;
+      if (!(e.touches && e.touches.length)) return;
+      const y = e.touches[0].clientY;
+      if (touchLastYRef.current == null) {
+        touchLastYRef.current = y;
+        return;
+      }
+      const delta = y - touchLastYRef.current; // positive when finger moves down (page tends to scroll up)
+      touchLastYRef.current = y;
+      // We want: page scrolling down => hide; page scrolling up => show.
+      // Finger moving up (delta < 0) generally means page scrolls down.
+      if (delta < -2) {
+        setHideMobileNav(true);
+      } else if (delta > 0) {
+        setHideMobileNav(false);
+      }
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(() => setHideMobileNav(false), 1000);
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
     };
   }, []);
   useEffect(() => {
