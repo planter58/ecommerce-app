@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 import api from '../api/client';
 import { toAbsoluteUrl } from '../utils/media';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [ribbonSelectedIndex, setRibbonSelectedIndex] = useState(0);
   const [ribbonLoading, setRibbonLoading] = useState(false);
   const [ribbonError, setRibbonError] = useState('');
+  const ribbonSectionRef = useRef(null);
 
   // Featured products state (super_admin only)
   const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
@@ -90,6 +91,10 @@ export default function AdminDashboard() {
     if (tab === 'ribbon') {
       console.log('[Ribbon] Tab opened, loading items...');
       loadRibbon();
+      // ensure the Ribbon section is brought into view on mobile/desktop
+      setTimeout(() => {
+        try { ribbonSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+      }, 0);
     }
   }, [tab]);
 
@@ -349,7 +354,7 @@ export default function AdminDashboard() {
         <button className={`button ${tab==='products'?"":"ghost"}`} onClick={()=>setTab('products')}>Products</button>
         <button className={`button ${tab==='vendors'?"":"ghost"}`} onClick={()=>setTab('vendors')}>Vendors {pendingCount>0 && <span className="badge" style={{ marginLeft:6 }}>{pendingCount}</span>}</button>
         <button className={`button ${tab==='categories'?"":"ghost"}`} onClick={()=>setTab('categories')}>Categories</button>
-        <button className={`button ${tab==='ribbon'?"":"ghost"}`} onClick={()=>setTab('ribbon')}>Ribbon</button>
+        <button className={`button ${tab==='ribbon'?"":"ghost"}`} onClick={()=>{ console.log('[Ribbon] Tab clicked'); setTab('ribbon'); }}>Ribbon</button>
         {user?.role === 'super_admin' && (
           <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
         )}
@@ -535,7 +540,7 @@ export default function AdminDashboard() {
       )}
 
       {tab === 'ribbon' && (
-        <section className="stack" style={{ gap:12 }}>
+        <section ref={ribbonSectionRef} className="stack" style={{ gap:12 }}>
           <div className="card" style={{ padding:12 }}>
             <h3 style={{ marginTop:0 }}>{ribbonEditingId ? 'Edit Ribbon Item' : 'Create Ribbon Item'}</h3>
             <form className="grid" style={{ gridTemplateColumns:'1fr 1fr', gap:8 }} onSubmit={ribbonEditingId ? (e)=>{ e.preventDefault(); saveRibbon(ribbonEditingId);} : createRibbon}>
