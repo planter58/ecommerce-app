@@ -10,6 +10,9 @@ export default function Home() {
   const [params, setParams] = useState({ page: 1, limit: 40, q: '', category: '' });
   // Keep track of which page the data was fetched for to avoid showing stale responses
   const [data, setData] = useState({ items: [], total: 0, pageTag: 1 });
+  // Retry tag to re-trigger fetching when login finishes and token becomes available
+  const [reloadTag, setReloadTag] = useState(0);
+  const retryRef = useRef(0);
   const isFeaturedMode = !params.q && !params.category;
   // Cache featured list, remaining pages, and combined page slices to avoid refetching
   // and recomputation when navigating between pages. Also preserve stable identity
@@ -116,6 +119,7 @@ export default function Home() {
               const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id) && prev.pageTag === pageAtStart;
               return same ? prev : { items, total, pageTag: pageAtStart };
             });
+            retryRef.current = 0; // reset retry counter on success
           }
         } else {
           let pd;
@@ -132,14 +136,25 @@ export default function Home() {
               const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id) && prev.pageTag === pageAtStart;
               return same ? prev : { items, total, pageTag: pageAtStart };
             });
+            retryRef.current = 0; // reset retry counter on success
           }
         }
       } catch (e) {
         // Keep previous data on transient errors to avoid empty flashes
       }
+      // If after this run the list is still empty and we recently logged in,
+      // retry a few times to pick up the new token without requiring a full refresh.
+      try {
+        const stillEmpty = (!data?.items || data.items.length === 0);
+        const hasToken = !!localStorage.getItem('token');
+        if (stillEmpty && hasToken && retryRef.current < 6 && isMounted) {
+          retryRef.current += 1;
+          setTimeout(() => setReloadTag(t => t + 1), 500);
+        }
+      } catch {}
     })();
     return () => { isMounted = false; };
-  }, [params, isFeaturedMode]);
+  }, [params, isFeaturedMode, reloadTag]);
 
   // Always reset scroll to top when changing page, query, or category
   useLayoutEffect(() => {
