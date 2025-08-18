@@ -13,6 +13,34 @@ export async function listProductReviews(req, res, next) {
   } catch (e) { next(e); }
 }
 
+// Admin: list all reviews with product and user info
+export async function listAllReviewsAdmin(req, res, next) {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '500', 10) || 500, 1), 2000);
+    const { rows } = await query(
+      `SELECT r.id, r.product_id, r.user_id, r.rating, r.comment, r.created_at,
+              p.title AS product_title,
+              u.name AS user_name,
+              u.email AS user_email
+       FROM reviews r
+       JOIN products p ON p.id = r.product_id
+       JOIN users u ON u.id = r.user_id
+       ORDER BY r.created_at DESC
+       LIMIT $1`, [limit]
+    );
+    res.json(rows);
+  } catch (e) { next(e); }
+}
+
+// Admin: delete a review by id
+export async function deleteReviewAdmin(req, res, next) {
+  try {
+    const { id } = req.params;
+    await query('DELETE FROM reviews WHERE id=$1', [id]);
+    res.status(204).end();
+  } catch (e) { next(e); }
+}
+
 export async function addProductReview(req, res, next) {
   try {
     const { rating, comment } = req.body;

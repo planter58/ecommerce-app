@@ -3,6 +3,7 @@ import { authRequired } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roles.js';
 import { listVendors, updateVendorStatus, pendingVendorCount, promoteUserRole, listAdmins, createAdmin, updateAdminStatus, deleteAdmin, updateAdminProfile, demoteAdminRole, bulkAdminsAction, getFeaturedProductsAdmin, setFeaturedProducts } from '../controllers/admin.controller.js';
 import { suggestFeaturedProducts } from '../controllers/products.controller.js';
+import { listAllReviewsAdmin, deleteReviewAdmin } from '../controllers/reviews.controller.js';
 
 const r = Router();
 
@@ -26,5 +27,9 @@ r.post('/admins/bulk', authRequired, requireRole('super_admin'), bulkAdminsActio
 r.get('/featured', authRequired, requireRole('super_admin'), getFeaturedProductsAdmin);
 r.put('/featured', authRequired, requireRole('super_admin'), setFeaturedProducts);
 r.get('/featured/suggest', authRequired, requireRole('super_admin'), suggestFeaturedProducts);
+
+// admin: reviews moderation
+r.get('/reviews', authRequired, requireRole('admin'), listAllReviewsAdmin);
+r.delete('/reviews/:id', authRequired, requireRole('admin'), deleteReviewAdmin);
 
 export default r;

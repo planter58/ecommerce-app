@@ -54,6 +54,10 @@ export default function AdminDashboard() {
   const [suggTotal, setSuggTotal] = useState(0);
   const [suggLimit] = useState(20);
   const [dragIndex, setDragIndex] = useState(null);
+  // Reviews moderation (admin)
+  const [allReviews, setAllReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
 
   const load = async () => {
     const [prod, { data: cats }] = await Promise.all([
@@ -266,6 +270,24 @@ export default function AdminDashboard() {
   const onSuspend = async (id) => { await api.put(`/admin/vendors/${id}/status`, { status: 'suspended' }); await searchVendors(); };
   const onSetPending = async (id) => { await api.put(`/admin/vendors/${id}/status`, { status: 'pending' }); await searchVendors(); };
   useEffect(() => { if (tab === 'vendors') loadPending(); }, [vendors]);
+  // Load reviews when Reviews tab opens (admins)
+  const loadReviews = async () => {
+    setReviewsError('');
+    setReviewsLoading(true);
+    try {
+      const { data } = await api.get('/admin/reviews', { params: { limit: 500 } });
+      setAllReviews(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setReviewsError(e?.response?.data?.message || e?.message || 'Failed to load reviews');
+      setAllReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+  useEffect(() => { if (tab === 'reviews' && (user?.role === 'admin' || user?.role === 'super_admin')) loadReviews(); }, [tab, user?.role]);
+  const deleteReview = async (id) => {
+    try { await api.delete(`/admin/reviews/${id}`); await loadReviews(); } catch {}
+  };
 
   // super_admin: admins management
   const loadAdmins = async () => {
@@ -367,6 +389,9 @@ export default function AdminDashboard() {
         <button className={`button ${tab==='vendors'?"":"ghost"}`} onClick={()=>setTab('vendors')}>Vendors {pendingCount>0 && <span className="badge" style={{ marginLeft:6 }}>{pendingCount}</span>}</button>
         <button className={`button ${tab==='categories'?"":"ghost"}`} onClick={()=>setTab('categories')}>Categories</button>
         <button className={`button ${tab==='ribbon'?"":"ghost"}`} onClick={()=>{ console.log('[Ribbon] Tab clicked'); setTab('ribbon'); }}>Ribbon</button>
+        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+          <button className={`button ${tab==='reviews'?"":"ghost"}`} onClick={()=>setTab('reviews')}>Reviews</button>
+        )}
         {user?.role === 'super_admin' && (
           <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
         )}
@@ -548,6 +573,37 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {tab === 'reviews' && (user?.role === 'admin' || user?.role === 'super_admin') && (
+        <section className="stack" style={{ gap:12 }}>
+          <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
+            <h3 style={{ margin:0 }}>Product Reviews</h3>
+            <button className="button ghost" onClick={loadReviews} disabled={reviewsLoading}>Reload</button>
+          </div>
+          {reviewsError && <div className="card" style={{ padding:10, color:'crimson' }}>{reviewsError}</div>}
+          {reviewsLoading && <div className="card" style={{ padding:10 }}>Loading...</div>}
+          {!reviewsLoading && !reviewsError && (
+            <div className="stack" style={{ gap:8 }}>
+              {allReviews.length === 0 && <div className="small muted">No reviews found.</div>}
+              {allReviews.map(rv => (
+                <div key={rv.id} className="card" style={{ padding:12 }}>
+                  <div className="row" style={{ justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                    <div>
+                      <div><strong>{rv.product_title}</strong> <span className="small muted">• by {rv.user_name || rv.user_email || 'User'}</span></div>
+                      <div className="small" style={{ marginTop:4 }}>Rating: <strong>{rv.rating}</strong></div>
+                      {rv.comment && <div style={{ marginTop:6 }}>{rv.comment}</div>}
+                      <div className="small muted" style={{ marginTop:6 }}>{new Date(rv.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="row" style={{ gap:6 }}>
+                      <button className="button ghost" onClick={()=>deleteReview(rv.id)}>Delete</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
