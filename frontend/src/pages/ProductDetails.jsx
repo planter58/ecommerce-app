@@ -98,6 +98,11 @@ export default function ProductDetails() {
                 <div className="input" style={{ width:48, textAlign:'center' }}>{qty}</div>
                 <button type="button" className="button ghost" onClick={()=>setQty(q => q+1)}>+</button>
               </div>
+              {/* Live subtotal updates immediately with qty */}
+              <div className="mt-8" style={{ fontSize:16 }}>
+                <div><strong>Subtotal:</strong> KSh {(((product.price_cents || 0) * qty)/100).toFixed(2)}</div>
+                <div className="small muted">KSh {(product.price_cents/100).toFixed(2)} x {qty}</div>
+              </div>
               <div className="mt-16">
                 <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
                 <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
@@ -152,6 +157,11 @@ export default function ProductDetails() {
               <button type="button" className="button ghost" onClick={()=>setQty(q => Math.max(1, q-1))}>-</button>
               <div className="input" style={{ width:48, textAlign:'center' }}>{qty}</div>
               <button type="button" className="button ghost" onClick={()=>setQty(q => q+1)}>+</button>
+            </div>
+            {/* Live subtotal updates immediately with qty */}
+            <div className="mt-8" style={{ fontSize:16 }}>
+              <div><strong>Subtotal:</strong> KSh {(((product.price_cents || 0) * qty)/100).toFixed(2)}</div>
+              <div className="small muted">KSh {(product.price_cents/100).toFixed(2)} x {qty}</div>
             </div>
             <div className="mt-16">
               <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
