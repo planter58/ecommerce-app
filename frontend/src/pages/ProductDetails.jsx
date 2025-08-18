@@ -89,7 +89,9 @@ export default function ProductDetails() {
               <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
                 {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
                 {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
-                <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
+                <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer' }}>
+                  Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})
+                </Link>
               </div>
               {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
               <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -105,6 +107,13 @@ export default function ProductDetails() {
               </div>
               <div className="mt-16">
                 <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
+                {/* Clickable review stars under Details */}
+                <div className="small" style={{ margin: '0 0 8px 0' }}>
+                  <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer' }}>
+                    <span style={{ marginRight: 8 }}>{'★'.repeat(Math.round(product.avg_rating || 0))}{'☆'.repeat(Math.max(0, 5 - Math.round(product.avg_rating || 0)))}</span>
+                    <span>({product.rating_count || 0}) See all reviews</span>
+                  </Link>
+                </div>
                 <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
               </div>
               {!added ? (
@@ -149,7 +158,9 @@ export default function ProductDetails() {
             <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
               {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
               {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
-              <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
+              <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer' }}>
+                Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})
+              </Link>
             </div>
             {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
             <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -165,6 +176,13 @@ export default function ProductDetails() {
             </div>
             <div className="mt-16">
               <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
+              {/* Clickable review stars under Details */}
+              <div className="small" style={{ margin: '0 0 8px 0' }}>
+                <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer' }}>
+                  <span style={{ marginRight: 8 }}>{'★'.repeat(Math.round(product.avg_rating || 0))}{'☆'.repeat(Math.max(0, 5 - Math.round(product.avg_rating || 0)))}</span>
+                  <span>({product.rating_count || 0}) See all reviews</span>
+                </Link>
+              </div>
               <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
             </div>
             {!added ? (
