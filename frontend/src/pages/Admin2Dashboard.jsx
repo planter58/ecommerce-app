@@ -111,22 +111,11 @@ export default function Admin2Dashboard() {
   const loadPublicRibbon = async () => {
     setPublicRibbonError(''); setPublicRibbonLoading(true);
     try {
-      const res = await fetch('/api/ribbon', { credentials: 'same-origin' });
-      const ct = res.headers.get('content-type') || '';
-      const raw = await res.text();
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status} ${res.statusText} • ${raw.slice(0,120)}`);
-      }
-      if (ct.includes('text/html') || raw.trim().startsWith('<!doctype') || raw.trim().startsWith('<html')) {
-        throw new Error('Received HTML instead of JSON. Is the backend running and /api proxied?');
-      }
-      let data;
-      try { data = JSON.parse(raw); }
-      catch { throw new Error('Invalid JSON from /api/ribbon'); }
+      const { data } = await api.get('/ribbon');
       setPublicRibbon(Array.isArray(data) ? data : []);
     } catch (e) {
       setPublicRibbon([]);
-      setPublicRibbonError(e?.message || 'Failed to load public ribbon');
+      setPublicRibbonError(e?.response?.data?.message || e?.message || 'Failed to load public ribbon');
     } finally {
       setPublicRibbonLoading(false);
     }

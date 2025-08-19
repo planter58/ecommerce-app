@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import api from '../api/client.js';
 
 // A reusable promotional carousel with auto-scroll, swipe, infinite loop, and dots
 export default function PromoCarousel({ items, className, mode }) {
@@ -17,9 +18,7 @@ export default function PromoCarousel({ items, className, mode }) {
     if (!items) {
       (async () => {
         try {
-          const res = await fetch('/api/ribbon', { credentials: 'same-origin' });
-          if (!res.ok) throw new Error('Failed to load ribbon');
-          const data = await res.json();
+          const { data } = await api.get('/ribbon');
           if (mounted) setServerItems(Array.isArray(data) ? data : []);
         } catch {
           if (mounted) setServerItems([]);
