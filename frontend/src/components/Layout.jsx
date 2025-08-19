@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { CartContext } from '../context/CartContext.jsx';
 import MobileNav from './MobileNav.jsx';
@@ -23,6 +23,28 @@ export default function Layout({ children }) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Ensure browser does not restore previous scroll on navigation
+  useEffect(() => {
+    try { if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'; } catch {}
+  }, []);
+
+  // Global: on any route change, jump to top before paint to avoid retaining scroll position
+  useLayoutEffect(() => {
+    try {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      // Fallback after layout
+      requestAnimationFrame(() => {
+        try {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        } catch {}
+      });
+    } catch {}
+  }, [pathname]);
 
   // Hide/show mobile footer on scroll (down hides, up shows) with rAF + idle reveal
   useEffect(() => {

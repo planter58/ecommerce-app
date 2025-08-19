@@ -207,6 +207,15 @@ export default function Home() {
     return cached || [];
   }, [isFeaturedMode, params.page, data.items, data.items?.length, data.pageTag]);
 
+  // Derive a stable total for pagination (avoid disabling controls when data lags)
+  const effectiveTotal = useMemo(() => {
+    if (isFeaturedMode) {
+      const t = cacheRef.current.combinedTotals.get(params.page);
+      if (typeof t === 'number' && t > 0) return t;
+    }
+    return data.total || 0;
+  }, [isFeaturedMode, params.page, data.total]);
+
   return (
     <div>
       <PromoCarousel className="full-viewport" mode="compact" />
@@ -229,8 +238,8 @@ export default function Home() {
           itemsToRender.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)
         )}
       </div>
-      {((data.total || 0) > params.limit) && (
-        <Pagination page={params.page} total={data.total} limit={params.limit}
+      {((effectiveTotal || 0) > params.limit) && (
+        <Pagination page={params.page} total={effectiveTotal} limit={params.limit}
           onPageChange={(page)=>setParams(p=>({ ...p, page }))} />
       )}
     </div>
