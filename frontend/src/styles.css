@@ -250,6 +250,13 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
   .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
+/* Ribbon admin grid: two columns on desktop, stack on small screens */
+.ribbon-grid{grid-template-columns:1fr 1fr}
+@media (max-width:720px){
+  /* Override global .grid mobile rule to force single column for Ribbon editor */
+  .ribbon-grid{grid-template-columns:1fr !important}
+}
+
 .product-item{display:flex;gap:12px;align-items:flex-start}
 @media (max-width: 640px){
   .product-item{flex-direction:column}

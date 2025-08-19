@@ -565,7 +565,7 @@ export default function Admin2Dashboard() {
       {tab === 'ribbon' && (
         <section>
           <h3>Homepage Ribbon</h3>
-          <div className="grid" style={{ gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div className="grid ribbon-grid" style={{ gap:12 }}>
             <div className="card" style={{ padding:12 }}>
               <h4 style={{ marginTop:0 }}>{ribbonEditingId? 'Edit Item' : 'Create Item'}</h4>
               {ribbonCreateError && <div className="error" role="alert">{ribbonCreateError}</div>}
