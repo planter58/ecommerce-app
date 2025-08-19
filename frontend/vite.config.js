@@ -12,7 +12,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // Proxy uploaded assets as well (so <img src="/uploads/..."> works in dev)
+      // Proxy pu--loaded assets as well (so <img src="/uploads/..."> works in dev)
       '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
