@@ -34,8 +34,8 @@ export default function ProductDetails() {
       }
     });
     fetchProductReviews(id).then(setReviews);
-    // Ensure we start from top when navigating to a new similar product
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+    // Ensure we start from top when navigating to a new similar product (instant to avoid white flashes)
+    try { window.scrollTo(0, 0); } catch {}
   }, [id]);
 
   // Track viewport width to drive responsive columns (JS-based to avoid CSS edits)

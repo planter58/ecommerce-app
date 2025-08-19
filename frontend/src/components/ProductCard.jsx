@@ -15,7 +15,11 @@ function ProductCard({ product, index = 0 }) {
   }), [index]);
   return (
     <div className="card" style={{ position:'relative' }}>
-      <Link to={`/product/${product.id}`} className="link" style={{ textDecoration: 'none' }}>
+      <Link
+        to={`/product/${product.id}`}
+        className="link"
+        style={{ textDecoration: 'none' }}
+      >
         <div
           style={{
             position:'relative',

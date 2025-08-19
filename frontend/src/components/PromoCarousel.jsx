@@ -183,42 +183,42 @@ export default function PromoCarousel({ items, className, mode }) {
 
             return (
               <div className="pc-slide" key={idx}>
-                <div className={"pc-card" + ((isMinimal || forceCompact) ? " compact" : "")} style={{ background: bgStyle }}>
+                <div className={"pc-card" + ((isMinimal || forceCompact) ? " compact" : "")} style={{ background: bgStyle, minHeight: isNarrow ? 40 : 60 }}>
                   {(isMinimal || forceCompact) ? (
-                    <div style={{ height:'100%', display:'grid', gridTemplateColumns:'minmax(80px, 1fr) 2fr minmax(72px, 14%) auto', alignItems:'center', gap: isNarrow ? 10 : 20, padding: isNarrow ? '0 14px' : '0 40px' }}>
+                    <div style={{ height:'100%', display:'grid', gridTemplateColumns:'minmax(100px, 1fr) 2fr minmax(88px, 14%) auto', alignItems:'center', gap: isNarrow ? 4 : 8, padding: isNarrow ? '3px 6px' : '5px 16px' }}>
                       {/* Title (left) */}
-                      <div className="pc-title" style={{ fontWeight:800, fontSize: isNarrow ? 14 : 18, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{title}</div>
+                      <div className="pc-title" style={{ fontWeight:800, fontSize: isNarrow ? 16 : 20, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{title}</div>
                       {/* Body (middle) */}
-                      <div className="pc-text" style={{ fontSize: isNarrow ? 13 : 16, fontWeight:800, opacity:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{body}</div>
+                      <div className="pc-text" style={{ fontSize: isNarrow ? 14 : 18, fontWeight:700, opacity:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{body}</div>
                       {/* Media (right but slightly inset) */}
-                      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'flex-end', overflow:'hidden', marginRight: isNarrow ? 8 : 24, background:'transparent' }}>
+                      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'flex-end', overflow:'hidden', marginRight: isNarrow ? 4 : 9, background:'transparent' }}>
                         {compactMediaUrl ? (
                           compactMediaType === 'video' ? (
-                            <video src={compactMediaUrl} style={{ height:'100%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
+                            <video src={compactMediaUrl} style={{ height: isNarrow ? '100%' : '102%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
                           ) : (
-                            <img src={compactMediaUrl} alt={title} loading="lazy" decoding="async" style={{ height:'100%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} />
+                            <img src={compactMediaUrl} alt={title} loading="lazy" decoding="async" style={{ height: isNarrow ? '100%' : '102%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} />
                           )
                         ) : null}
                       </div>
                       {/* CTA label (far right as plain text) */}
-                      <div className="pc-cta" style={{ fontWeight:800, fontSize: isNarrow ? 13 : 16, whiteSpace:'nowrap' }}>{ctaLabel}</div>
+                      <div className="pc-cta" style={{ fontWeight:800, fontSize: isNarrow ? 14 : 16, whiteSpace:'nowrap' }}>{ctaLabel}</div>
                     </div>
                   ) : (
-                    <div className="pc-split" style={{ display:'grid', gridTemplateColumns: isNarrow ? '1fr' : '1.4fr 1fr', gap: isNarrow ? 16 : 28, alignItems:'stretch', width:'100%', height:'100%' }}>
+                    <div className="pc-split" style={{ display:'grid', gridTemplateColumns: isNarrow ? '1fr' : '1.4fr 1fr', gap: isNarrow ? 6 : 11, alignItems:'stretch', width:'100%', height:'100%' }}>
                       {/* Left: Hero */}
-                      <div className="pc-split-left" style={{ padding: isNarrow ? '12px 16px' : '20px 40px', display:'grid', gridTemplateRows:'auto 1fr auto', minHeight: isNarrow ? 160 : 220 }}>
-                        <div className="pc-title" style={{ marginBottom:8, fontSize: isNarrow ? undefined : 20, fontWeight:800 }}>{title}</div>
-                        {body && <div className="pc-text" style={{ marginBottom:14, fontSize: isNarrow ? undefined : 16, fontWeight:800 }}>{body}</div>}
+                      <div className="pc-split-left" style={{ padding: isNarrow ? '6px 8px' : '10px 16px', display:'grid', gridTemplateRows:'auto 1fr auto', minHeight: isNarrow ? 90 : 120 }}>
+                        <div className="pc-title" style={{ marginBottom:4, fontSize: isNarrow ? 18 : 22, fontWeight:800, lineHeight:1.2 }}>{title}</div>
+                        {body && <div className="pc-text" style={{ marginBottom:6, fontSize: isNarrow ? 14 : 18, fontWeight:700, lineHeight:1.3 }}>{body}</div>}
                         {ctaLabel && (
-                          <a href={ctaUrl} className="button" style={{ textDecoration:'none', alignSelf:'start' }}>
+                          <a href={ctaUrl} className="button" style={{ textDecoration:'none', alignSelf:'start', padding:'4px 7px', fontSize: isNarrow ? 13 : 15 }}>
                             {ctaLabel}
                           </a>
                         )}
                       </div>
                       {/* Right: stacked tiles */}
                       <div className="pc-split-right" style={ isNarrow
-                        ? { display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:12, padding:'8px 12px' }
-                        : { display:'grid', gridTemplateRows:`repeat(${Math.max(mediaTiles.length, 1)}, 1fr)`, gap:12, padding:'16px 40px' }
+                        ? { display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:5, padding:'4px 6px' }
+                        : { display:'grid', gridTemplateRows:`repeat(${Math.max(mediaTiles.length, 1)}, 1fr)`, gap:5, padding:'8px 16px' }
                       }>
                         {mediaTiles.length === 0 && null}
                         {mediaTiles.map((t, i) => {
@@ -226,12 +226,12 @@ export default function PromoCarousel({ items, className, mode }) {
                           const tMediaUrl = t.media_url || t.image || null;
                           const tType = t.media_type || (tMediaUrl && tMediaUrl.match(/\.mp4|\.webm|\.ogg/i) ? 'video' : (tMediaUrl ? 'image' : ''));
                           return (
-                            <div key={i} className="pc-tile" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, alignItems:'center', borderRadius:8, background:'transparent', overflow:'hidden' }}>
-                              <div style={{ padding:'8px 10px' }}>
-                                <div className="pc-tile-title" style={{ fontWeight:600, fontSize:14, lineHeight:1.2 }}>{tTitle}</div>
-                                {t.body && <div className="small muted" style={{ marginTop:4, fontSize:12, lineHeight:1.2 }}>{t.body}</div>}
+                            <div key={i} className="pc-tile" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:4, alignItems:'center', borderRadius:4, background:'transparent', overflow:'hidden' }}>
+                              <div style={{ padding:'4px 5px' }}>
+                                <div className="pc-tile-title" style={{ fontWeight:600, fontSize:14, lineHeight:1.25 }}>{tTitle}</div>
+                                {t.body && <div className="small muted" style={{ marginTop:2, fontSize:12, lineHeight:1.25 }}>{t.body}</div>}
                               </div>
-                              <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', padding:6, overflow:'hidden', background:'transparent' }}>
+                              <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', padding:3, overflow:'hidden', background:'transparent' }}>
                                 {tMediaUrl ? (
                                   tType === 'video' ? (
                                     <video src={tMediaUrl} style={{ width:'100%', height:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
