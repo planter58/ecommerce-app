@@ -27,22 +27,11 @@ function ProductCard({ product, index = 0 }) {
             overflow:'hidden',
             width: '100%',
             aspectRatio: '4 / 3', // enforce uniform frame like Jumia
+            // Improve scroll perf by skipping offscreen rendering
+            contentVisibility: 'auto',
+            containIntrinsicSize: '300px 225px',
           }}
         >
-          {/* Blurred underlay to simulate cover without heavy repaint */}
-          <div
-            aria-hidden
-            style={{
-              position:'absolute',
-              inset:0,
-              backgroundImage: coverTransformed ? `url(${coverTransformed})` : undefined,
-              backgroundSize:'cover',
-              backgroundPosition:'center',
-              filter:'blur(12px)',
-              transform:'scale(1.05)',
-              zIndex:0,
-            }}
-          />
           {hasCompare && (
             <div style={{ position:'absolute', top:8, left:8, background:'crimson', color:'#fff', padding:'2px 6px', borderRadius:4, fontSize:12, fontWeight:700, zIndex:3 }}>
               {discountPct}%
@@ -66,7 +55,7 @@ function ProductCard({ product, index = 0 }) {
               inset:0,
               width:'100%',
               height:'100%',
-              objectFit:'cover',
+              objectFit:'contain',
               display:'block',
               zIndex:2,
               opacity: loaded ? 1 : 0,
