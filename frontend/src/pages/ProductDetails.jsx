@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useLayoutEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchProduct, fetchProducts } from '../api/products';
 import { CartContext } from '../context/CartContext.jsx';
@@ -18,6 +18,11 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState(null);
   const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
 
+  // Scroll to top immediately before paint on product id change
+  useLayoutEffect(() => {
+    try { window.scrollTo(0, 0); } catch {}
+  }, [id]);
+
   useEffect(() => {
     fetchProduct(id).then(async (p) => {
       setProduct(p);
@@ -34,8 +39,6 @@ export default function ProductDetails() {
       }
     });
     fetchProductReviews(id).then(setReviews);
-    // Ensure we start from top when navigating to a new similar product (instant to avoid white flashes)
-    try { window.scrollTo(0, 0); } catch {}
   }, [id]);
 
   // Track viewport width to drive responsive columns (JS-based to avoid CSS edits)
