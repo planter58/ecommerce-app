@@ -183,21 +183,23 @@ export default function PromoCarousel({ items, className, mode }) {
 
             return (
               <div className="pc-slide" key={idx}>
-                <div className={"pc-card" + ((isMinimal || forceCompact) ? " compact" : "")} style={{ background: bgStyle, minHeight: isNarrow ? 46 : 60 }}>
+                <div className={"pc-card" + ((isMinimal || forceCompact) ? " compact" : "")} style={{ background: bgStyle, minHeight: isNarrow ? 55 : 60 }}>
                   {(isMinimal || forceCompact) ? (
-                    <div style={{ height:'100%', display:'grid', gridTemplateColumns:'minmax(100px, 1fr) 2fr minmax(88px, 14%) auto', alignItems:'center', gap: isNarrow ? 5 : 8, padding: isNarrow ? '4px 7px' : '5px 16px' }}>
+                    <div style={{ height:'100%', display:'grid', gridTemplateColumns:'minmax(100px, 1fr) 2fr minmax(88px, 14%) auto', alignItems:'center', gap: isNarrow ? 6 : 8, padding: isNarrow ? '5px 8px' : '5px 16px' }}>
                       {/* Title (left) */}
                       <div
                         className="pc-title"
                         style={ isNarrow
-                          ? { fontWeight:800, fontSize:16, lineHeight:1.2, whiteSpace:'normal', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', wordBreak:'break-word' }
+                          ? { fontWeight:800, fontSize:16, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', gridColumn:'1 / 3' }
                           : { fontWeight:800, fontSize:20, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }
                         }
                       >{title}</div>
-                      {/* Body (middle) */}
-                      <div className="pc-text" style={{ fontSize: isNarrow ? 14 : 18, fontWeight:700, opacity:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{body}</div>
+                      {/* Body (middle) - hidden on small screens */}
+                      {!isNarrow && (
+                        <div className="pc-text" style={{ fontSize: 18, fontWeight:700, opacity:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{body}</div>
+                      )}
                       {/* Media (right but slightly inset) */}
-                      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'flex-end', overflow:'hidden', marginRight: isNarrow ? 5 : 9, background:'transparent' }}>
+                      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'flex-end', overflow:'hidden', marginRight: isNarrow ? 6 : 9, background:'transparent' }}>
                         {compactMediaUrl ? (
                           compactMediaType === 'video' ? (
                             <video src={compactMediaUrl} style={{ height: isNarrow ? '100%' : '102%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
@@ -210,17 +212,18 @@ export default function PromoCarousel({ items, className, mode }) {
                       <div className="pc-cta" style={{ fontWeight:800, fontSize: isNarrow ? 14 : 16, whiteSpace:'nowrap' }}>{ctaLabel}</div>
                     </div>
                   ) : (
-                    <div className="pc-split" style={{ display:'grid', gridTemplateColumns: isNarrow ? '1fr' : '1.4fr 1fr', gap: isNarrow ? 7 : 11, alignItems:'stretch', width:'100%', height:'100%' }}>
+                    <div className="pc-split" style={{ display:'grid', gridTemplateColumns: isNarrow ? '1fr' : '1.4fr 1fr', gap: isNarrow ? 8 : 11, alignItems:'stretch', width:'100%', height:'100%' }}>
                       {/* Left: Hero */}
-                      <div className="pc-split-left" style={{ padding: isNarrow ? '7px 9px' : '10px 16px', display:'grid', gridTemplateRows:'auto 1fr auto', minHeight: isNarrow ? 104 : 120 }}>
+                      <div className="pc-split-left" style={{ padding: isNarrow ? '8px 11px' : '10px 16px', display:'grid', gridTemplateRows:'auto 1fr auto', minHeight: isNarrow ? 125 : 120 }}>
                         <div
                           className="pc-title"
                           style={ isNarrow
-                            ? { marginBottom:4, fontSize:18, fontWeight:800, lineHeight:1.2, whiteSpace:'normal', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', wordBreak:'break-word' }
+                            ? { marginBottom:4, fontSize:18, fontWeight:800, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }
                             : { marginBottom:4, fontSize:22, fontWeight:800, lineHeight:1.2 }
                           }
                         >{title}</div>
-                        {body && <div className="pc-text" style={{ marginBottom:6, fontSize: isNarrow ? 14 : 18, fontWeight:700, lineHeight:1.3 }}>{body}</div>}
+                        {/* Body hidden on small screens */}
+                        {!isNarrow && body && <div className="pc-text" style={{ marginBottom:6, fontSize: 18, fontWeight:700, lineHeight:1.3 }}>{body}</div>}
                         {ctaLabel && (
                           <a href={ctaUrl} className="button" style={{ textDecoration:'none', alignSelf:'start', padding:'4px 7px', fontSize: isNarrow ? 13 : 15 }}>
                             {ctaLabel}
@@ -229,7 +232,7 @@ export default function PromoCarousel({ items, className, mode }) {
                       </div>
                       {/* Right: stacked tiles */}
                       <div className="pc-split-right" style={ isNarrow
-                        ? { display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:6, padding:'5px 7px' }
+                        ? { display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:7, padding:'6px 8px' }
                         : { display:'grid', gridTemplateRows:`repeat(${Math.max(mediaTiles.length, 1)}, 1fr)`, gap:5, padding:'8px 16px' }
                       }>
                         {mediaTiles.length === 0 && null}
@@ -238,12 +241,12 @@ export default function PromoCarousel({ items, className, mode }) {
                           const tMediaUrl = t.media_url || t.image || null;
                           const tType = t.media_type || (tMediaUrl && tMediaUrl.match(/\.mp4|\.webm|\.ogg/i) ? 'video' : (tMediaUrl ? 'image' : ''));
                           return (
-                            <div key={i} className="pc-tile" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:5, alignItems:'center', borderRadius:5, background:'transparent', overflow:'hidden' }}>
-                              <div style={{ padding:'5px 6px' }}>
+                            <div key={i} className="pc-tile" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, alignItems:'center', borderRadius:6, background:'transparent', overflow:'hidden' }}>
+                              <div style={{ padding:'6px 7px' }}>
                                 <div className="pc-tile-title" style={{ fontWeight:600, fontSize:14, lineHeight:1.25 }}>{tTitle}</div>
                                 {t.body && <div className="small muted" style={{ marginTop:2, fontSize:12, lineHeight:1.25 }}>{t.body}</div>}
                               </div>
-                              <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', padding:4, overflow:'hidden', background:'transparent' }}>
+                              <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', padding:5, overflow:'hidden', background:'transparent' }}>
                                 {tMediaUrl ? (
                                   tType === 'video' ? (
                                     <video src={tMediaUrl} style={{ width:'100%', height:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
