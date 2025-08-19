@@ -206,9 +206,10 @@ export default function SuperAdminDashboard() {
     if (!newAdmin.email) { setCreateError('Email is required'); return; }
     if (newAdmin.password && newAdmin.password !== newAdmin.confirm_password) { setCreateError('Passwords do not match'); return; }
     try {
-      await api.post('/admin/admins', newAdmin);
+      const payload = { ...newAdmin, role: (newAdmin.role || 'admin').trim().toLowerCase() };
+      const { data } = await api.post('/admin/admins', payload);
       setNewAdmin({ email:'', name:'', password:'', confirm_password:'', role:'admin' });
-      setCreateSuccess('Admin created');
+      setCreateSuccess(`Admin created as role: ${data?.role || payload.role || 'admin'}`);
       await loadAdmins();
     } catch (err) {
       setCreateError(err?.response?.data?.message || 'Failed to create admin');
@@ -305,14 +306,17 @@ export default function SuperAdminDashboard() {
                   <div>
                     <div className="row" style={{ alignItems:'center', gap:8 }}>
                       <input type="checkbox" checked={selectedAdmins.includes(a.id)} onChange={e=>toggleSelectAdmin(a.id, e.target.checked)} />
-                      <div><strong>{a.email}</strong> {a.name ? <span className="small muted">• {a.name}</span> : null}</div>
+                      <div>
+                        <strong>{a.email}</strong> {a.name ? <span className="small muted">• {a.name}</span> : null}
+                        <div className="small muted">Role: {a.role}</div>
+                      </div>
                     </div>
                     <div className="small">Status: {a.status || 'active'}</div>
                   </div>
                   <div className="row" style={{ gap:6 }}>
                     {a.status !== 'active' && <button className="button" onClick={()=>setAdminActive(a.id)}>Activate</button>}
                     {a.status !== 'suspended' && <button className="button ghost" onClick={()=>setAdminSuspended(a.id)}>Suspend</button>}
-                    {a.role === 'admin' ? (
+                    {(a.role === 'admin' || a.role === 'admin2') ? (
                       <>
                         <button className="button ghost" onClick={()=>demoteAdmin(a.id)}>Demote</button>
                         <button className="button ghost" onClick={()=>removeAdmin(a.id)}>Delete</button>
