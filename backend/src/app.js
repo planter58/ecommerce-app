@@ -23,7 +23,7 @@ import { query } from './config/db.js';
 loadEnv();
 
 const app = express();
-// Allow loading images from this server on different origins (e.g., Vite dev server)
+// Allow loading images- from this server on different origins (e.g., Vite dev server)
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 // CORS: allow configured origin and common localhost/127.0.0.1 dev origins
 // Normalize CLIENT_ORIGIN to avoid trailing-slash mismatches
