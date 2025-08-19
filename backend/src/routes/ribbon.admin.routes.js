@@ -5,19 +5,19 @@ import { adminList, adminCreate, adminUpdate, adminEnable, adminReorder, adminDe
 
 const r = Router();
 
-// Admin: list all
-r.get('/', authRequired, requireRole('admin'), adminList);
+// Admin, Admin2 & Super Admin: list all
+r.get('/', authRequired, requireRole('admin','admin2','super_admin'), adminList);
 // Create item (text-only initially; media uploaded via /:id/media)
-r.post('/', authRequired, requireRole('admin'), adminCreate);
+r.post('/', authRequired, requireRole('admin','admin2','super_admin'), adminCreate);
 // Update fields
-r.put('/:id', authRequired, requireRole('admin'), adminUpdate);
+r.put('/:id', authRequired, requireRole('admin','admin2','super_admin'), adminUpdate);
 // Enable/disable
-r.patch('/:id/enable', authRequired, requireRole('admin'), adminEnable);
+r.patch('/:id/enable', authRequired, requireRole('admin','admin2','super_admin'), adminEnable);
 // Reorder: body { items: [{id, position}, ...] }
-r.patch('/reorder', authRequired, requireRole('admin'), adminReorder);
+r.patch('/reorder', authRequired, requireRole('admin','admin2','super_admin'), adminReorder);
 // Upload/replace media
-r.post('/:id/media', authRequired, requireRole('admin'), upload, adminUploadMedia);
+r.post('/:id/media', authRequired, requireRole('admin','admin2','super_admin'), upload, adminUploadMedia);
 // Delete
-r.delete('/:id', authRequired, requireRole('admin'), adminDelete);
+r.delete('/:id', authRequired, requireRole('admin','admin2','super_admin'), adminDelete);
 
 export default r;

@@ -24,8 +24,8 @@ export default function MobileNav({ hidden = false }) {
         <span className="icon" aria-hidden>🔎</span>
         <span className="label">Search</span>
       </button>
-      {(user?.role === 'vendor' || user?.role === 'admin') && (
-        <Link className="item" to={user.role === 'admin' ? '/admin' : '/vendor'}>
+      {(user?.role === 'vendor' || user?.role === 'admin' || user?.role === 'admin2' || user?.role === 'super_admin') && (
+        <Link className="item" to={user.role === 'admin' ? '/admin' : (user.role === 'admin2' ? '/admin2' : (user.role === 'super_admin' ? '/super-admin' : '/vendor'))}>
           <span className="icon" aria-hidden>🧰</span>
           <span className="label">Dashboard</span>
         </Link>

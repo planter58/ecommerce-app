@@ -19,12 +19,17 @@ function rowToDto(r) {
   return {
     id: r.id,
     title: r.title,
+    title_mobile: r.title_mobile,
     body: r.body,
+    body_mobile: r.body_mobile,
     cta_label: r.cta_label,
+    cta_label_mobile: r.cta_label_mobile,
     cta_url: r.cta_url,
     media_url: r.media_url,
     media_type: r.media_type,
     media_poster_url: r.media_poster_url,
+    bg_color: r.bg_color,
+    background: r.background,
     enabled: r.enabled,
     position: r.position,
     created_at: r.created_at,
@@ -52,13 +57,13 @@ export async function adminList(_req, res, next) {
 
 export async function adminCreate(req, res, next) {
   try {
-    const { title, body, cta_label, cta_url, media_type, enabled = true } = req.body || {};
+    const { title, title_mobile, body, body_mobile, cta_label, cta_label_mobile, cta_url, media_type, bg_color, background, enabled = true } = req.body || {};
     const { rows: posRows } = await query('SELECT COALESCE(MAX(position),0)+1 AS pos FROM ribbon_items');
     const position = posRows[0]?.pos || 1;
     const { rows } = await query(
-      `INSERT INTO ribbon_items (title, body, cta_label, cta_url, media_type, enabled, position)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [title || null, body || null, cta_label || null, cta_url || null, media_type || null, enabled, position]
+      `INSERT INTO ribbon_items (title, title_mobile, body, body_mobile, cta_label, cta_label_mobile, cta_url, media_type, bg_color, background, enabled, position)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [title || null, title_mobile || null, body || null, body_mobile || null, cta_label || null, cta_label_mobile || null, cta_url || null, media_type || null, bg_color || null, background || null, enabled, position]
     );
     res.status(201).json(rowToDto(rows[0]));
   } catch (e) { next(e); }
@@ -67,20 +72,25 @@ export async function adminCreate(req, res, next) {
 export async function adminUpdate(req, res, next) {
   try {
     const { id } = req.params;
-    const { title, body, cta_label, cta_url, media_type, media_poster_url, enabled, position } = req.body || {};
+    const { title, title_mobile, body, body_mobile, cta_label, cta_label_mobile, cta_url, media_type, media_poster_url, bg_color, background, enabled, position } = req.body || {};
     const { rows } = await query(
       `UPDATE ribbon_items SET
         title = COALESCE($2, title),
-        body = COALESCE($3, body),
-        cta_label = COALESCE($4, cta_label),
-        cta_url = COALESCE($5, cta_url),
-        media_type = COALESCE($6, media_type),
-        media_poster_url = COALESCE($7, media_poster_url),
-        enabled = COALESCE($8, enabled),
-        position = COALESCE($9, position)
+        title_mobile = COALESCE($3, title_mobile),
+        body = COALESCE($4, body),
+        body_mobile = COALESCE($5, body_mobile),
+        cta_label = COALESCE($6, cta_label),
+        cta_label_mobile = COALESCE($7, cta_label_mobile),
+        cta_url = COALESCE($8, cta_url),
+        media_type = COALESCE($9, media_type),
+        media_poster_url = COALESCE($10, media_poster_url),
+        bg_color = COALESCE($11, bg_color),
+        background = COALESCE($12, background),
+        enabled = COALESCE($13, enabled),
+        position = COALESCE($14, position)
        WHERE id = $1
        RETURNING *`,
-      [id, title, body, cta_label, cta_url, media_type, media_poster_url, enabled, position]
+      [id, title, title_mobile, body, body_mobile, cta_label, cta_label_mobile, cta_url, media_type, media_poster_url, bg_color, background, enabled, position]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     res.json(rowToDto(rows[0]));

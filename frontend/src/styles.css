@@ -188,14 +188,16 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 .pc-viewport{position:relative; overflow:hidden; border-radius:12px; background:transparent}
 .pc-track{display:flex; width:100%; will-change:transform}
 .pc-slide{flex:0 0 100%; padding:0}
-.pc-card{display:block; width:100%; min-height:48px; max-height:72px; height:56px; /* thin ribbon height */
+/* Jumia-like hero + tiles band height */
+.pc-card{display:block; width:100%; min-height:200px; max-height:280px; height:240px;
   color:white; text-decoration:none; border-radius:12px; overflow:hidden;
   box-shadow:0 4px 12px rgba(0,0,0,.12); position:relative;
   background:linear-gradient(135deg, rgba(91,124,250,.9), rgba(127,83,172,.9))}
+.pc-card.compact{height:44px; min-height:40px; max-height:48px}
 .pc-card img{width:100%; height:100%; object-fit:cover; display:block}
 .pc-content{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:18px}
-.pc-title{font-weight:800; font-size:14px; letter-spacing:.2px}
-.pc-text{display:none}
+.pc-title{font-weight:800; font-size:18px; letter-spacing:.2px}
+.pc-text{display:block; opacity:.9; font-size:14px}
 
 .pc-nav{position:absolute; top:50%; transform:translateY(-50%); z-index:2; background:rgba(0,0,0,.28); color:#fff; border:none; width:28px; height:28px; border-radius:999px; cursor:pointer; display:none; align-items:center; justify-content:center}
 .pc-prev{left:8px}
@@ -209,7 +211,8 @@ body{margin:0;font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Ari
 [data-theme="light"] .pc-dot.active{background:var(--primary)}
 
 @media (max-width:720px){
-  .pc-card{height:56px; min-height:50px; max-height:64px}
+  .pc-card{height:160px; min-height:150px; max-height:180px}
+  .pc-card.compact{height:40px; min-height:38px; max-height:44px}
   .promo-carousel{margin:0 0 2px}
   .promo-carousel.compact{margin-top:-16px}
   /* mobile full viewport still applies */

@@ -40,7 +40,7 @@ export async function demoteAdminRole(req, res, next) {
     const user = u[0];
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.role === 'super_admin') return res.status(400).json({ message: 'Cannot modify super_admin' });
-    if (user.role !== 'admin') return res.status(400).json({ message: 'User is not an admin' });
+    if (user.role !== 'admin' && user.role !== 'admin2') return res.status(400).json({ message: 'User is not an admin' });
     const { rows } = await query('UPDATE users SET role=$2, was_admin=true, updated_at=NOW() WHERE id=$1 RETURNING id, email, name, role, status, was_admin', [id, 'customer']);
     res.json(rows[0]);
   } catch (e) { next(e); }
@@ -65,10 +65,10 @@ export async function bulkAdminsAction(req, res, next) {
         } else if (action === 'suspend') {
           await query('UPDATE users SET status=$2, updated_at=NOW() WHERE id=$1', [id, 'suspended']);
         } else if (action === 'delete') {
-          if (user.role !== 'admin') throw new Error('not-admin');
+          if (user.role !== 'admin' && user.role !== 'admin2') throw new Error('not-admin');
           await query('DELETE FROM users WHERE id=$1', [id]);
         } else if (action === 'demote') {
-          if (user.role !== 'admin') throw new Error('not-admin');
+          if (user.role !== 'admin' && user.role !== 'admin2') throw new Error('not-admin');
           await query('UPDATE users SET role=$2 WHERE id=$1', [id, 'customer']);
         }
         results.push({ id, ok:true });
@@ -152,12 +152,12 @@ export async function promoteUserRole(req, res, next) {
     const { id } = req.params;
     const { role } = req.body;
     if (req.user.role !== 'super_admin') return res.status(403).json({ message: 'Forbidden' });
-    if (role !== 'admin') return res.status(400).json({ message: 'Invalid role' });
+    if (!['admin','admin2'].includes(role)) return res.status(400).json({ message: 'Invalid role' });
     // Prevent promoting another admin or super_admin change here
     const { rows: u } = await query('SELECT id, role FROM users WHERE id=$1', [id]);
     if (!u[0]) return res.status(404).json({ message: 'User not found' });
     if (u[0].role === 'super_admin') return res.status(400).json({ message: 'Cannot modify super_admin' });
-    const { rows } = await query('UPDATE users SET role=$2, was_admin=true, updated_at=NOW() WHERE id=$1 RETURNING id, email, name, role, status, was_admin', [id, 'admin']);
+    const { rows } = await query('UPDATE users SET role=$2, was_admin=true, updated_at=NOW() WHERE id=$1 RETURNING id, email, name, role, status, was_admin', [id, role]);
     res.json(rows[0]);
   } catch (e) { next(e); }
 }
@@ -169,8 +169,8 @@ export async function listAdmins(req, res, next) {
     const params = [];
     const where = [];
     let i = 1;
-    // Include current admins and any user who was ever an admin
-    where.push(`(role='admin' OR was_admin=true)`);
+    // Include current admins (admin and admin2) and any user who was ever an admin
+    where.push(`((role='admin' OR role='admin2') OR was_admin=true)`);
     if (q && q.trim()) {
       params.push(`%${q}%`, `%${q}%`);
       where.push(`(email ILIKE $${i} OR name ILIKE $${i+1})`); i += 2;
@@ -185,7 +185,8 @@ export async function listAdmins(req, res, next) {
 
 export async function createAdmin(req, res, next) {
   try {
-    const { email, name, password, confirm_password } = req.body;
+    const { email, name, password, confirm_password, role } = req.body;
+    const targetRole = ['admin','admin2'].includes(role) ? role : 'admin';
     if (!email) return res.status(400).json({ message: 'email is required' });
     if (password && password !== confirm_password) return res.status(400).json({ message: 'Passwords do not match' });
     const { rows: existingRows } = await query('SELECT id, role FROM users WHERE email=$1', [email]);
@@ -193,18 +194,18 @@ export async function createAdmin(req, res, next) {
     // If user exists: promote to admin; update password if provided
     if (existing) {
       if (existing.role === 'super_admin') return res.status(400).json({ message: 'Cannot modify super_admin' });
-      if (existing.role === 'admin' ) return res.status(400).json({ message: 'User is already an admin' });
+      if (existing.role === 'admin' || existing.role === 'admin2') return res.status(400).json({ message: 'User is already an admin' });
       if (password) {
         const hash = await hashPassword(password);
         const { rows } = await query(
-          `UPDATE users SET role='admin', was_admin=true, password_hash=$2, name=COALESCE($3,name), status='active', updated_at=NOW()
-           WHERE id=$1 RETURNING id, email, name, role, status, was_admin`, [existing.id, hash, name || null]
+          `UPDATE users SET role=$3, was_admin=true, password_hash=$2, name=COALESCE($4,name), status='active', updated_at=NOW()
+           WHERE id=$1 RETURNING id, email, name, role, status, was_admin`, [existing.id, hash, targetRole, name || null]
         );
         return res.status(200).json(rows[0]);
       } else {
         const { rows } = await query(
-          `UPDATE users SET role='admin', was_admin=true, name=COALESCE($2,name), status='active', updated_at=NOW()
-           WHERE id=$1 RETURNING id, email, name, role, status, was_admin`, [existing.id, name || null]
+          `UPDATE users SET role=$3, was_admin=true, name=COALESCE($2,name), status='active', updated_at=NOW()
+           WHERE id=$1 RETURNING id, email, name, role, status, was_admin`, [existing.id, name || null, targetRole]
         );
         return res.status(200).json(rows[0]);
       }
@@ -215,8 +216,8 @@ export async function createAdmin(req, res, next) {
     const hash = await hashPassword(password);
     const { rows } = await query(
       `INSERT INTO users (email, name, password_hash, role, status, was_admin)
-       VALUES ($1,$2,$3,'admin','active',true)
-       RETURNING id, email, name, role, status, was_admin`, [email, name || null, hash]
+       VALUES ($1,$2,$3,$4,'active',true)
+       RETURNING id, email, name, role, status, was_admin`, [email, name || null, hash, targetRole]
     );
     res.status(201).json(rows[0]);
   } catch (e) { next(e); }
@@ -241,7 +242,7 @@ export async function deleteAdmin(req, res, next) {
     if (id === req.user.id) return res.status(400).json({ message: 'Cannot delete yourself' });
     const { rows: u } = await query('SELECT role FROM users WHERE id=$1', [id]);
     if (!u[0]) return res.status(404).json({ message: 'User not found' });
-    if (u[0].role !== 'admin') return res.status(400).json({ message: 'Not an admin account' });
+    if (u[0].role !== 'admin' && u[0].role !== 'admin2') return res.status(400).json({ message: 'Not an admin account' });
     await query('DELETE FROM users WHERE id=$1', [id]);
     res.json({ ok: true });
   } catch (e) { next(e); }
@@ -253,7 +254,7 @@ export async function updateAdminProfile(req, res, next) {
     const { name, phone, location, street_address, delivery_preference, bio, avatar_url } = req.body;
     const { rows: u } = await query('SELECT role FROM users WHERE id=$1', [id]);
     if (!u[0]) return res.status(404).json({ message: 'User not found' });
-    if (u[0].role !== 'admin') return res.status(400).json({ message: 'Not an admin account' });
+    if (u[0].role !== 'admin' && u[0].role !== 'admin2') return res.status(400).json({ message: 'Not an admin account' });
     const { rows } = await query(
       `UPDATE users SET
          name=COALESCE($2,name), phone=COALESCE($3,phone), location=COALESCE($4,location),

@@ -7,10 +7,10 @@ import { listAllReviewsAdmin, deleteReviewAdmin } from '../controllers/reviews.c
 
 const r = Router();
 
-r.get('/vendors', authRequired, requireRole('admin'), listVendors);
-r.put('/vendors/:id/status', authRequired, requireRole('admin'), updateVendorStatus);
+r.get('/vendors', authRequired, requireRole('admin','admin2'), listVendors);
+r.put('/vendors/:id/status', authRequired, requireRole('admin','admin2'), updateVendorStatus);
 // pending vendors count badge
-r.get('/vendors/pending-count', authRequired, requireRole('admin'), pendingVendorCount);
+r.get('/vendors/pending-count', authRequired, requireRole('admin','admin2'), pendingVendorCount);
 // super admin only: promote a user to admin
 r.put('/users/:id/role', authRequired, requireRole('super_admin'), promoteUserRole);
 
@@ -26,10 +26,11 @@ r.post('/admins/bulk', authRequired, requireRole('super_admin'), bulkAdminsActio
 // super admin: featured products management (homepage order 1..30)
 r.get('/featured', authRequired, requireRole('super_admin'), getFeaturedProductsAdmin);
 r.put('/featured', authRequired, requireRole('super_admin'), setFeaturedProducts);
-r.get('/featured/suggest', authRequired, requireRole('super_admin'), suggestFeaturedProducts);
+r.get('/featured/suggest', authRequired, requireRole('admin','super_admin'), suggestFeaturedProducts);
 
-// admin: reviews moderation
-r.get('/reviews', authRequired, requireRole('admin'), listAllReviewsAdmin);
-r.delete('/reviews/:id', authRequired, requireRole('admin'), deleteReviewAdmin);
+// admin, admin2 & super_admin: reviews view; super_admin: delete
+r.get('/reviews', authRequired, requireRole('admin','admin2','super_admin'), listAllReviewsAdmin);
+// allow admin2 to delete reviews as well
+r.delete('/reviews/:id', authRequired, requireRole('admin2','super_admin'), deleteReviewAdmin);
 
 export default r;

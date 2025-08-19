@@ -159,7 +159,7 @@ export default function Home() {
   // Always reset scroll to top when changing page, query, or category
   useLayoutEffect(() => {
     try {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       // no-op
     }
@@ -203,7 +203,7 @@ export default function Home() {
 
   return (
     <div>
-      <PromoCarousel className="full-viewport" />
+      <PromoCarousel className="full-viewport" mode="compact" />
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
       <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'layout paint' }}>

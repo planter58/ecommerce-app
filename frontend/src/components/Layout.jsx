@@ -106,7 +106,7 @@ export default function Layout({ children }) {
     let timer;
     const loadPending = async () => {
       try {
-        if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+        if (user && (user.role === 'admin' || user.role === 'admin2' || user.role === 'super_admin')) {
           const { data } = await api.get('/admin/vendors/pending-count');
           setPendingCount(data.count || 0);
         } else {
@@ -116,7 +116,7 @@ export default function Layout({ children }) {
     };
     loadPending();
     // refresh periodically while logged in as admin
-    if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+    if (user && (user.role === 'admin' || user.role === 'admin2' || user.role === 'super_admin')) {
       timer = setInterval(loadPending, 30000);
     }
     return () => { if (timer) clearInterval(timer); };
@@ -149,6 +149,11 @@ export default function Layout({ children }) {
             {(user?.role === 'admin' || user?.role === 'super_admin') && (
               <Link className="link" to="/admin" style={{ fontWeight: pathname.startsWith('/admin')?700:undefined, borderBottom: pathname.startsWith('/admin')?'2px solid var(--primary)': '2px solid transparent', position:'relative' }}>
                 Admin {pendingCount>0 && <span className="badge" style={{ marginLeft:6 }}>{pendingCount}</span>}
+              </Link>
+            )}
+            {(user?.role === 'admin2' || user?.role === 'super_admin') && (
+              <Link className="link" to="/admin2" style={{ fontWeight: pathname.startsWith('/admin2')?700:undefined, borderBottom: pathname.startsWith('/admin2')?'2px solid var(--primary)': '2px solid transparent', position:'relative' }}>
+                Admin2 {pendingCount>0 && <span className="badge" style={{ marginLeft:6 }}>{pendingCount}</span>}
               </Link>
             )}
             {user?.role === 'super_admin' && (
@@ -192,7 +197,7 @@ export default function Layout({ children }) {
               <button className="icon-btn theme" aria-label="Toggle theme" onClick={()=>setTheme(theme==='light'?'dark':'light')}>
                 <span aria-hidden>{theme==='light'?'🌞':'🌙'}</span>
               </button>
-              <Link className="icon-btn" to={user ? (user.role === 'super_admin' ? '/super-admin' : (user.role === 'admin' ? '/admin' : (user.role === 'vendor' ? '/vendor' : '/'))) : '/login'} aria-label="Account">
+              <Link className="icon-btn" to={user ? (user.role === 'super_admin' ? '/super-admin' : (user.role === 'admin' ? '/admin' : (user.role === 'admin2' ? '/admin2' : (user.role === 'vendor' ? '/vendor' : '/')))) : '/login'} aria-label="Account">
                 <span aria-hidden>👤</span>
               </Link>
               <Link className="icon-btn cart" to="/cart" aria-label="Cart">
@@ -222,6 +227,11 @@ export default function Layout({ children }) {
               {(user?.role === 'admin' || user?.role === 'super_admin') && (
                 <Link className="link" to="/admin" onClick={()=>setMobileMenuOpen(false)} style={{ fontWeight: pathname.startsWith('/admin')?700:undefined }}>
                   Admin {pendingCount>0 && <span className="badge sm" style={{ marginLeft:6 }}>{pendingCount}</span>}
+                </Link>
+              )}
+              {(user?.role === 'admin2' || user?.role === 'super_admin') && (
+                <Link className="link" to="/admin2" onClick={()=>setMobileMenuOpen(false)} style={{ fontWeight: pathname.startsWith('/admin2')?700:undefined }}>
+                  Admin2 {pendingCount>0 && <span className="badge sm" style={{ marginLeft:6 }}>{pendingCount}</span>}
                 </Link>
               )}
               {user?.role === 'super_admin' && (

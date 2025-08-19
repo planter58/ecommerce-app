@@ -35,7 +35,7 @@ export default function ProductDetails() {
     });
     fetchProductReviews(id).then(setReviews);
     // Ensure we start from top when navigating to a new similar product
-    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
   }, [id]);
 
   // Track viewport width to drive responsive columns (JS-based to avoid CSS edits)
@@ -123,7 +123,7 @@ export default function ProductDetails() {
                         <>
                           <span style={{ color:'#f5b50a', fontSize: 18 }}>{'⭐'.repeat(Math.round(avg))}</span>
                           <span style={{ color: avg === 0 ? '#888' : undefined }}><strong>{display}</strong></span>
-                          <span style={{ marginLeft: 10, color:'#3b82f6' }}>({count}) Customers reviews</span>
+                          <span style={{ marginLeft: 10, color:'#888' }}>({count}) Customers reviews</span>
                         </>
                       );
                     })()}
@@ -208,7 +208,7 @@ export default function ProductDetails() {
                       <>
                         <span style={{ color:'#f5b50a', fontSize: 18 }}>{'⭐'.repeat(Math.round(avg))}</span>
                         <span style={{ color: avg === 0 ? '#888' : undefined }}><strong>{display}</strong></span>
-                        <span style={{ marginLeft: 10, color:'#3b82f6' }}>({count}) Customers reviews</span>
+                        <span style={{ marginLeft: 10, color:'#888' }}>({count}) Customers reviews</span>
                       </>
                     );
                   })()}
