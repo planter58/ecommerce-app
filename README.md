@@ -21,4 +21,4 @@
 
 ## Notes
 - JWT auth, RBAC, products, categories, cart, orders, Stripe payments.
-- See `backend/src/sql/schema.sql` and `seed.sql` for DB setup.
+- See `backend/src/sql/schema.sql` and `seed.sql` for DB setup
