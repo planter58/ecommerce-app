@@ -31,6 +31,13 @@ try {
   }
 } catch {}
 
+// Log pool-level errors for better diagnostics in production
+pool.on('error', (err) => {
+  try {
+    console.error('[db] Pool error', { message: err?.message || String(err), code: err?.code });
+  } catch {}
+});
+
 export const query = (text, params) => pool.query(text, params);
 
 export async function withTransaction(fn) {
@@ -54,4 +61,19 @@ export async function execSqlFile(filePath) {
   const absolute = path.isAbsolute(filePath) ? filePath : path.join(__dirname, '..', filePath);
   const sql = fs.readFileSync(absolute, 'utf8');
   return pool.query(sql);
+}
+
+// Simple connectivity check to run at startup
+export async function initDb() {
+  try {
+    const { rows } = await pool.query('SELECT 1 as ok');
+    if (rows && rows[0] && rows[0].ok === 1) {
+      console.log('[db] connectivity check OK');
+    } else {
+      console.warn('[db] connectivity check returned unexpected result');
+    }
+  } catch (e) {
+    console.error('[db] connectivity check FAILED', { message: e?.message || String(e) });
+    throw e;
+  }
 }

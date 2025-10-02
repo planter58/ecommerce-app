@@ -1,6 +1,6 @@
 import app from './app.js';
 import { loadEnv } from './config/env.js';
-import { execSqlFile } from './config/db.js';
+import { execSqlFile, initDb } from './config/db.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,6 +10,8 @@ loadEnv();
 // Optionally run DB migrations on startup (useful on free tiers without shell/jobs)
 if (process.env.AUTO_MIGRATE === 'true') {
   try {
+    // Basic connectivity check before running migrations
+    await initDb();
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const files = [
@@ -27,7 +29,7 @@ if (process.env.AUTO_MIGRATE === 'true') {
     ];
     console.log('AUTO_MIGRATE=true: applying migrations...');
     for (const f of files) {
-      const abs = path.isAbsolute(f) ? f : path.join(__dirname, '..', f);
+      const abs = path.isAbsolute(f) ? f : path.join(__dirname, f);
       if (!fs.existsSync(abs)) {
         console.log('Skipping missing migration', f);
         continue;
