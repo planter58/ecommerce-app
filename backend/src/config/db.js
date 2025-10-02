@@ -8,14 +8,30 @@ loadEnv();
 
 const { Pool } = pg;
 
+// Build effective connection string and options
+const pgSslEnabled = process.env.PG_SSL === 'true';
+let connectionString = process.env.DATABASE_URL || '';
+try {
+  if (connectionString && pgSslEnabled) {
+    const url = new URL(connectionString);
+    const hasSslParam = url.searchParams.has('ssl') || url.searchParams.has('sslmode');
+    if (!hasSslParam) {
+      // Ensure ssl negotiation required on providers that close non-SSL connections
+      url.searchParams.set('sslmode', 'require');
+      connectionString = url.toString();
+    }
+  }
+} catch {}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  connectionString,
+  ssl: pgSslEnabled ? { rejectUnauthorized: false } : false,
   // Improve connection stability on managed providers
   keepAlive: true,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 15000,
   idleTimeoutMillis: 30000,
   max: Number(process.env.PG_POOL_MAX || 10),
+  application_name: process.env.PG_APP_NAME || 'ecommerce-app',
 });
 
 // Optional debug: print DB connection info (non-sensitive) when diagnosing prod issues
@@ -64,16 +80,24 @@ export async function execSqlFile(filePath) {
 }
 
 // Simple connectivity check to run at startup
-export async function initDb() {
-  try {
-    const { rows } = await pool.query('SELECT 1 as ok');
-    if (rows && rows[0] && rows[0].ok === 1) {
-      console.log('[db] connectivity check OK');
-    } else {
+export async function initDb(retries = 12) {
+  let lastErr;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const { rows } = await pool.query('SELECT 1 as ok');
+      if (rows && rows[0] && rows[0].ok === 1) {
+        console.log('[db] connectivity check OK');
+        return;
+      }
       console.warn('[db] connectivity check returned unexpected result');
+      return;
+    } catch (e) {
+      lastErr = e;
+      console.error(`[db] connectivity check FAILED (attempt ${attempt}/${retries})`, { message: e?.message || String(e) });
+      // exponential backoff up to 5s per attempt
+      const delay = Math.min(500 * Math.pow(1.5, attempt - 1), 5000);
+      await new Promise(r => setTimeout(r, delay));
     }
-  } catch (e) {
-    console.error('[db] connectivity check FAILED', { message: e?.message || String(e) });
-    throw e;
   }
+  throw lastErr;
 }
