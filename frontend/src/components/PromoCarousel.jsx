@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import api from '../api/client.js';
 
 // A reusable promotional carousel with auto-scroll, swipe, infinite loop, and dots
-export default function PromoCarousel({ items, className }) {
+export default function PromoCarousel({ items, className, mode }) {
   const defaultItems = useMemo(() => (
     [
       { id: 'p1', title: 'Mega Sale • Up to 50% Off', image: null, bg: 'linear-gradient(135deg,#5b7cfa,#7f53ac)', text: 'Shop now and save big on top categories', link: '#' },
@@ -10,21 +11,58 @@ export default function PromoCarousel({ items, className }) {
     ]
   ), []);
 
-  const data = items?.length ? items : defaultItems;
+  // Fetch from public API if items not provided
+  const [serverItems, setServerItems] = useState(null);
+  useEffect(() => {
+    let mounted = true;
+    if (!items) {
+      (async () => {
+        try {
+          const { data } = await api.get('/ribbon');
+          if (mounted) setServerItems(Array.isArray(data) ? data : []);
+        } catch {
+          if (mounted) setServerItems([]);
+        }
+      })();
+    }
+    return () => { mounted = false; };
+  }, [items]);
+
+  const data = items?.length ? items : (serverItems && serverItems.length ? serverItems : defaultItems);
+
+  // Group items into slides
+  // - compact mode: 1 item per slide (1-at-a-time)
+  // - default: up to 4 per slide [hero, tile, tile, tile]
+  const groups = useMemo(() => {
+    if (!data.length) return [];
+    const out = [];
+    const groupSize = (mode === 'compact') ? 1 : 4;
+    for (let i = 0; i < data.length; i += groupSize) out.push(data.slice(i, i + groupSize));
+    return out;
+  }, [data, mode]);
 
   // Infinite loop technique: clone first and last
   const extended = useMemo(() => {
-    if (!data.length) return [];
-    const first = data[0];
-    const last = data[data.length - 1];
-    return [last, ...data, first];
-  }, [data]);
+    if (!groups.length) return [];
+    const first = groups[0];
+    const last = groups[groups.length - 1];
+    return [last, ...groups, first];
+  }, [groups]);
 
   const trackRef = useRef(null);
   const [index, setIndex] = useState(1); // start at the first real slide
   // start with transitions off to avoid initial flash/jump
   const [transition, setTransition] = useState(false);
   const [isHover, setIsHover] = useState(false);
+
+  // Responsive: consider narrow screens
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const check = () => setIsNarrow(window.innerWidth <= 900);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Autoplay
   useEffect(() => {
@@ -83,12 +121,12 @@ export default function PromoCarousel({ items, className }) {
 
   // Normalize current dot (exclude clones)
   const currentDot = useMemo(() => {
-    if (!data.length) return 0;
+    if (!groups.length) return 0;
     let i = index - 1;
-    if (i < 0) i = data.length - 1;
-    if (i >= data.length) i = 0;
+    if (i < 0) i = groups.length - 1;
+    if (i >= groups.length) i = 0;
     return i;
-  }, [index, data.length]);
+  }, [index, groups.length]);
 
   return (
     <div className={(className ? `promo-carousel ${className}` : 'promo-carousel')} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>
@@ -102,28 +140,131 @@ export default function PromoCarousel({ items, className }) {
           }}
           onTransitionEnd={onTransitionEnd}
         >
-          {extended.map((item, idx) => (
-            <div className="pc-slide" key={idx}>
-              <a className="pc-card" href={item.link || '#'} style={{ background: item.bg || undefined }}>
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.title || 'promo'}
-                    loading="lazy"
-                    decoding="async"
-                    className="pc-img"
-                    style={{ opacity: 0, transition: 'opacity .18s ease' }}
-                    onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
-                  />
-                ) : (
-                  <div className="pc-content">
-                    <div className="pc-title">{item.title}</div>
-                    {item.text && <div className="pc-text">{item.text}</div>}
-                  </div>
-                )}
-              </a>
-            </div>
-          ))}
+          {extended.map((group, idx) => {
+            const hero = group[0];
+            const tiles = group.slice(1);
+
+            const titleDesktop = hero?.title || hero?.heading || 'Promotion';
+            const titleMobile = hero?.title_mobile || titleDesktop;
+            const title = isNarrow ? titleMobile : titleDesktop;
+            const bodyDesktop = hero?.body || hero?.text || '';
+            const bodyMobile = hero?.body_mobile || bodyDesktop;
+            const body = isNarrow ? bodyMobile : bodyDesktop;
+            const ctaDesktop = hero?.cta_label || hero?.cta || '';
+            const ctaMobile = hero?.cta_label_mobile || ctaDesktop;
+            const ctaLabel = isNarrow ? ctaMobile : ctaDesktop;
+            const ctaUrl = hero?.cta_url || hero?.link || '#';
+            const mediaUrl = hero?.media_url || hero?.image || null;
+            const mediaType = hero?.media_type || (mediaUrl && mediaUrl.match(/\.mp4|\.webm|\.ogg/i) ? 'video' : (mediaUrl ? 'image' : ''));
+            // Prefer explicit CSS background (e.g., gradient), then bg, then bg_color. Fallback to any item in the group.
+            let bgStyle = hero?.background || hero?.bg || hero?.bg_color || '';
+            if (!bgStyle) {
+              const carrier = group.find(it => it && (it.background || it.bg || it.bg_color));
+              bgStyle = carrier?.background || carrier?.bg || carrier?.bg_color || '';
+            }
+            if (!bgStyle) bgStyle = 'linear-gradient(135deg, #5b7cfa 0%, #4058d8 100%)';
+
+            // Consider only tiles that actually have media; text-only tiles are ignored to avoid empty layouts
+            const mediaTiles = tiles.filter(t => {
+              const u = t?.media_url || t?.image || null;
+              return !!u;
+            });
+            // For compact mode, pick a single media to show on the right: prefer hero media, else first media tile
+            const compactMediaUrl = mediaUrl || (mediaTiles[0]?.media_url || mediaTiles[0]?.image || null);
+            const compactMediaType = (() => {
+              const u = compactMediaUrl;
+              if (!u) return '';
+              return (u.match(/\.mp4|\.webm|\.ogg/i) ? 'video' : 'image');
+            })();
+            // Determine if this slide should be a thin compact ribbon (minimal content)
+            // If there is no hero media and no media-bearing tiles, render compact (even if body exists)
+            const isMinimal = (!mediaUrl && mediaTiles.length === 0);
+            const forceCompact = (mode === 'compact');
+
+            return (
+              <div className="pc-slide" key={idx}>
+                <div className={"pc-card" + ((isMinimal || forceCompact) ? " compact" : "")} style={{ background: bgStyle, minHeight: isNarrow ? 55 : 60 }}>
+                  {(isMinimal || forceCompact) ? (
+                    <div style={{ height:'100%', display:'grid', gridTemplateColumns:'minmax(100px, 1fr) 2fr minmax(88px, 14%) auto', alignItems:'center', gap: isNarrow ? 6 : 8, padding: isNarrow ? '5px 8px' : '5px 16px' }}>
+                      {/* Title (left) */}
+                      <div
+                        className="pc-title"
+                        style={ isNarrow
+                          ? { fontWeight:800, fontSize:16, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', gridColumn:'1 / 3' }
+                          : { fontWeight:800, fontSize:20, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }
+                        }
+                      >{title}</div>
+                      {/* Body (middle) - hidden on small screens */}
+                      {!isNarrow && (
+                        <div className="pc-text" style={{ fontSize: 18, fontWeight:700, opacity:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{body}</div>
+                      )}
+                      {/* Media (right but slightly inset) */}
+                      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'flex-end', overflow:'hidden', marginRight: isNarrow ? 6 : 9, background:'transparent' }}>
+                        {compactMediaUrl ? (
+                          compactMediaType === 'video' ? (
+                            <video src={compactMediaUrl} style={{ height: isNarrow ? '100%' : '102%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
+                          ) : (
+                            <img src={compactMediaUrl} alt={title} loading="lazy" decoding="async" style={{ height: isNarrow ? '100%' : '102%', width:'auto', maxWidth:'100%', objectFit:'contain', background:'transparent' }} />
+                          )
+                        ) : null}
+                      </div>
+                      {/* CTA label (far right as plain text) */}
+                      <div className="pc-cta" style={{ fontWeight:800, fontSize: isNarrow ? 14 : 16, whiteSpace:'nowrap' }}>{ctaLabel}</div>
+                    </div>
+                  ) : (
+                    <div className="pc-split" style={{ display:'grid', gridTemplateColumns: isNarrow ? '1fr' : '1.4fr 1fr', gap: isNarrow ? 8 : 11, alignItems:'stretch', width:'100%', height:'100%' }}>
+                      {/* Left: Hero */}
+                      <div className="pc-split-left" style={{ padding: isNarrow ? '8px 11px' : '10px 16px', display:'grid', gridTemplateRows:'auto 1fr auto', minHeight: isNarrow ? 125 : 120 }}>
+                        <div
+                          className="pc-title"
+                          style={ isNarrow
+                            ? { marginBottom:4, fontSize:18, fontWeight:800, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }
+                            : { marginBottom:4, fontSize:22, fontWeight:800, lineHeight:1.2 }
+                          }
+                        >{title}</div>
+                        {/* Body hidden on small screens */}
+                        {!isNarrow && body && <div className="pc-text" style={{ marginBottom:6, fontSize: 18, fontWeight:700, lineHeight:1.3 }}>{body}</div>}
+                        {ctaLabel && (
+                          <a href={ctaUrl} className="button" style={{ textDecoration:'none', alignSelf:'start', padding:'4px 7px', fontSize: isNarrow ? 13 : 15 }}>
+                            {ctaLabel}
+                          </a>
+                        )}
+                      </div>
+                      {/* Right: stacked tiles */}
+                      <div className="pc-split-right" style={ isNarrow
+                        ? { display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:7, padding:'6px 8px' }
+                        : { display:'grid', gridTemplateRows:`repeat(${Math.max(mediaTiles.length, 1)}, 1fr)`, gap:5, padding:'8px 16px' }
+                      }>
+                        {mediaTiles.length === 0 && null}
+                        {mediaTiles.map((t, i) => {
+                          const tTitle = t.title || t.heading || '';
+                          const tMediaUrl = t.media_url || t.image || null;
+                          const tType = t.media_type || (tMediaUrl && tMediaUrl.match(/\.mp4|\.webm|\.ogg/i) ? 'video' : (tMediaUrl ? 'image' : ''));
+                          return (
+                            <div key={i} className="pc-tile" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, alignItems:'center', borderRadius:6, background:'transparent', overflow:'hidden' }}>
+                              <div style={{ padding:'6px 7px' }}>
+                                <div className="pc-tile-title" style={{ fontWeight:600, fontSize:14, lineHeight:1.25 }}>{tTitle}</div>
+                                {t.body && <div className="small muted" style={{ marginTop:2, fontSize:12, lineHeight:1.25 }}>{t.body}</div>}
+                              </div>
+                              <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', padding:5, overflow:'hidden', background:'transparent' }}>
+                                {tMediaUrl ? (
+                                  tType === 'video' ? (
+                                    <video src={tMediaUrl} style={{ width:'100%', height:'100%', objectFit:'contain', background:'transparent' }} muted playsInline autoPlay loop preload="metadata" />
+                                  ) : (
+                                    <img src={tMediaUrl} alt={tTitle} loading="lazy" decoding="async" style={{ width:'100%', height:'100%', objectFit:'contain', background:'transparent' }} />
+                                  )
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
         {/* nav buttons (optional on desktop) */}
         <button className="pc-nav pc-prev" aria-label="Previous" onClick={prev}>
@@ -133,16 +274,18 @@ export default function PromoCarousel({ items, className }) {
           ›
         </button>
       </div>
-      <div className="pc-dots">
-        {data.map((_, i) => (
-          <button
-            key={i}
-            className={"pc-dot" + (i === currentDot ? ' active' : '')}
-            aria-label={`Go to slide ${i + 1}`}
-            onClick={() => setIndex(i + 1)}
-          />
-        ))}
-      </div>
+      {groups.length > 1 && (
+        <div className="pc-dots">
+          {groups.map((_, i) => (
+            <button
+              key={i}
+              className={"pc-dot" + (i === currentDot ? ' active' : '')}
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => setIndex(i + 1)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

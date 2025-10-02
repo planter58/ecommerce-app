@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 import api from '../api/client';
 import { toAbsoluteUrl } from '../utils/media';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -8,6 +8,8 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState('products');
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState('');
   const [productQuery, setProductQuery] = useState('');
   const [productVendorId, setProductVendorId] = useState('');
   const [form, setForm] = useState({ title: '', price_ksh: 0, compare_ksh: '', stock: 0, category_id: '', image_url: '', description: '', images: [] });
@@ -27,10 +29,22 @@ export default function AdminDashboard() {
   const [admins, setAdmins] = useState([]);
   const [adminQuery, setAdminQuery] = useState('');
   const [adminStatus, setAdminStatus] = useState(''); // '', 'active', 'suspended'
-  const [newAdmin, setNewAdmin] = useState({ email:'', name:'', password:'' });
+  const [newAdmin, setNewAdmin] = useState({ email:'', name:'', password:'', confirm_password:'', role:'admin' });
   const [editAdminId, setEditAdminId] = useState(null);
   const [editAdmin, setEditAdmin] = useState({ name:'', phone:'', location:'', street_address:'', delivery_preference:'', bio:'', avatar_url:'' });
   const [selectedAdmins, setSelectedAdmins] = useState([]);
+
+  // Ribbon manager state
+  const [ribbonItems, setRibbonItems] = useState([]);
+  const [ribbonForm, setRibbonForm] = useState({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
+  const [ribbonEditingId, setRibbonEditingId] = useState(null);
+  const [ribbonUploadFile, setRibbonUploadFile] = useState(null);
+  const [ribbonDragIndex, setRibbonDragIndex] = useState(null);
+  const [ribbonSelectedIndex, setRibbonSelectedIndex] = useState(0);
+  const [ribbonLoading, setRibbonLoading] = useState(false);
+  const [ribbonError, setRibbonError] = useState('');
+  const ribbonSectionRef = useRef(null);
+  const ribbonScrollTriesRef = useRef(0);
 
   // Featured products state (super_admin only)
   const [featured, setFeatured] = useState([]); // [{position, product_id, title, image_url}]
@@ -42,14 +56,60 @@ export default function AdminDashboard() {
   const [suggTotal, setSuggTotal] = useState(0);
   const [suggLimit] = useState(20);
   const [dragIndex, setDragIndex] = useState(null);
+  // Reviews moderation (admin)
+  const [allReviews, setAllReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
 
   const load = async () => {
-    const [prod, { data: cats }] = await Promise.all([
-      api.get('/products', { params: { q: productQuery || undefined, vendor_id: productVendorId || undefined, limit: 500, page: 1 } }).then(r => r.data),
-      api.get('/categories')
-    ]);
-    setProducts(prod.items);
-    setCategories(cats);
+    try {
+      const prod = await api.get('/products', { params: { q: productQuery || undefined, vendor_id: productVendorId || undefined, limit: 500, page: 1 } }).then(r => r.data);
+      setProducts(prod.items);
+    } catch (e) {
+      console.error('[AdminDashboard] Products load failed', e);
+      setProducts([]);
+    }
+    // Soft-load categories; ignore errors to avoid blocking products/vendors UI
+    try {
+      const { data: cats } = await api.get('/categories');
+      setCategories(cats);
+    } catch (e) {
+      // keep previous categories; categories tab has its own loader and error UI
+    }
+  };
+
+  // Load categories when Categories tab is opened to avoid stale/empty state
+  const loadCategories = async () => {
+    setCategoriesError('');
+    setCategoriesLoading(true);
+    try {
+      console.log('[Categories] Loading…');
+      const { data } = await api.get('/categories');
+      console.log('[Categories] Loaded', Array.isArray(data) ? data.length : 'n/a');
+      setCategories(data);
+    } catch (e) {
+      console.error('[Categories] Load failed', e);
+      setCategoriesError(e?.response?.data?.message || e?.message || 'Failed to load categories');
+      // keep previous categories on error
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // Ribbon drag-and-drop
+  const onRibbonDragStart = (idx) => setRibbonDragIndex(idx);
+  const onRibbonDragOver = (e, idx) => { e.preventDefault(); if (ribbonDragIndex === null || ribbonDragIndex === idx) return; };
+  const onRibbonDrop = (_e, idx) => {
+    if (ribbonDragIndex === null || ribbonDragIndex === idx) return;
+    setRibbonItems(list => {
+      const copy = [...list];
+      const [moved] = copy.splice(ribbonDragIndex, 1);
+      copy.splice(idx, 0, moved);
+      const withPos = copy.map((it,i)=>({ ...it, position:i+1 }));
+      reorderRibbon(withPos);
+      return withPos;
+    });
+    setRibbonDragIndex(null);
   };
 
   useEffect(() => { load(); }, []);
@@ -58,7 +118,36 @@ export default function AdminDashboard() {
     try { const { data } = await api.get('/admin/vendors/pending-count'); setPendingCount(data.count || 0); } catch {}
   };
   useEffect(() => { if (tab === 'vendors') loadPending(); }, [tab]);
+  useEffect(() => {
+    const ok = (['admin','super_admin'].includes(String(user?.role||'').toLowerCase()));
+    if (tab === 'categories' && ok) {
+      console.log('[Categories] useEffect trigger: tab=categories role ok');
+      loadCategories();
+    }
+  }, [tab, user?.role]);
   useEffect(() => { if (tab === 'admins' && user?.role === 'super_admin') loadAdmins(); }, [tab, adminQuery, adminStatus]);
+  // Load ribbon items when Ribbon tab opens (admin and super_admin)
+  useEffect(() => {
+    if (tab === 'ribbon' && (['admin','super_admin'].includes(String(user?.role||'').toLowerCase()))) {
+      console.log('[Ribbon] useEffect trigger: tab=ribbon role ok');
+      loadRibbon();
+      // ensure the Ribbon section is brought into view on mobile/desktop
+      const tryScroll = () => {
+        if (!ribbonSectionRef.current) return;
+        try {
+          ribbonSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          console.log('[Ribbon] scrollIntoView attempted');
+        } catch {}
+        if (ribbonScrollTriesRef.current < 4) {
+          ribbonScrollTriesRef.current += 1;
+          requestAnimationFrame(tryScroll);
+        } else {
+          ribbonScrollTriesRef.current = 0;
+        }
+      };
+      requestAnimationFrame(tryScroll);
+    }
+  }, [tab, user?.role]);
 
   const loadFeaturedAdmin = async () => {
     try { const { data } = await api.get('/admin/featured'); setFeatured(data || []); } catch { setFeatured([]); }
@@ -216,6 +305,33 @@ export default function AdminDashboard() {
   const onSuspend = async (id) => { await api.put(`/admin/vendors/${id}/status`, { status: 'suspended' }); await searchVendors(); };
   const onSetPending = async (id) => { await api.put(`/admin/vendors/${id}/status`, { status: 'pending' }); await searchVendors(); };
   useEffect(() => { if (tab === 'vendors') loadPending(); }, [vendors]);
+  // Load reviews when Reviews tab opens (admins)
+  const loadReviews = async () => {
+    setReviewsError('');
+    setReviewsLoading(true);
+    try {
+      console.log('[Reviews] Loading…');
+      const { data } = await api.get('/admin/reviews', { params: { limit: 500 } });
+      console.log('[Reviews] Loaded', Array.isArray(data) ? data.length : 'n/a');
+      setAllReviews(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('[Reviews] Load failed', e);
+      setReviewsError(e?.response?.data?.message || e?.message || 'Failed to load reviews');
+      setAllReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+  useEffect(() => {
+    const ok = (['admin','super_admin'].includes(String(user?.role||'').toLowerCase()));
+    if (tab === 'reviews' && ok) {
+      console.log('[Reviews] useEffect trigger: tab=reviews role ok');
+      loadReviews();
+    }
+  }, [tab, user?.role]);
+  const deleteReview = async (id) => {
+    try { await api.delete(`/admin/reviews/${id}`); await loadReviews(); } catch {}
+  };
 
   // super_admin: admins management
   const loadAdmins = async () => {
@@ -225,7 +341,7 @@ export default function AdminDashboard() {
   const createAdmin = async (e) => {
     e.preventDefault();
     await api.post('/admin/admins', newAdmin);
-    setNewAdmin({ email:'', name:'', password:'' });
+    setNewAdmin({ email:'', name:'', password:'', confirm_password:'', role:'admin' });
     await loadAdmins();
   };
   const setAdminActive = async (id) => { await api.put(`/admin/admins/${id}/status`, { status:'active' }); await loadAdmins(); };
@@ -244,16 +360,99 @@ export default function AdminDashboard() {
     await loadAdmins();
   };
 
+  // Ribbon Manager logic
+  const loadRibbon = async () => {
+    setRibbonError('');
+    setRibbonLoading(true);
+    try {
+      console.log('[Ribbon] Loading…');
+      const { data } = await api.get('/admin/ribbon');
+      console.log('[Ribbon] Loaded items:', Array.isArray(data) ? data.length : 'n/a');
+      setRibbonItems(data || []);
+    } catch (e) {
+      console.error('[Ribbon] Load failed', e);
+      setRibbonError(e?.response?.data?.message || e?.message || 'Failed to load');
+      setRibbonItems([]);
+    } finally {
+      setRibbonLoading(false);
+    }
+  };
+  const createRibbon = async (e) => {
+    e.preventDefault();
+    const payload = { ...ribbonForm };
+    try {
+      const { data } = await api.post('/admin/ribbon', payload);
+      setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' });
+      await loadRibbon();
+      if (ribbonUploadFile) {
+        await uploadRibbonMedia(data.id, ribbonUploadFile);
+        setRibbonUploadFile(null);
+        await loadRibbon();
+      }
+    } catch {}
+  };
+  const saveRibbon = async (id) => {
+    try { await api.put(`/admin/ribbon/${id}`, ribbonForm); setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); await loadRibbon(); } catch {}
+  };
+  const editRibbon = (it) => { setRibbonEditingId(it.id); setRibbonForm({ title: it.title||'', body: it.body||'', cta_label: it.cta_label||'', cta_url: it.cta_url||'', media_type: it.media_type||'' }); };
+  const cancelRibbonEdit = () => { setRibbonEditingId(null); setRibbonForm({ title:'', body:'', cta_label:'', cta_url:'', media_type:'' }); };
+  const toggleRibbon = async (id, enabled) => { try { await api.patch(`/admin/ribbon/${id}/enable`, { enabled }); await loadRibbon(); } catch {} };
+  const deleteRibbon = async (id) => { try { await api.delete(`/admin/ribbon/${id}`); await loadRibbon(); } catch {} };
+  const reorderRibbon = async (items) => {
+    try {
+      await api.patch('/admin/ribbon/reorder', { items: items.map((x,i)=>({ id:x.id, position: i+1 })) });
+      // Reload to reflect server order and any normalization
+      await loadRibbon();
+    } catch {}
+  };
+  const moveRibbonUp = async (idx) => {
+    if (idx <= 0) return;
+    setRibbonItems(list => {
+      const copy = [...list];
+      [copy[idx-1], copy[idx]] = [copy[idx], copy[idx-1]];
+      const withPos = copy.map((it,i)=>({ ...it, position:i+1 }));
+      reorderRibbon(withPos);
+      return withPos;
+    });
+  };
+  const moveRibbonDown = async (idx) => {
+    setRibbonItems(list => {
+      if (idx >= list.length - 1) return list;
+      const copy = [...list];
+      [copy[idx+1], copy[idx]] = [copy[idx], copy[idx+1]];
+      const withPos = copy.map((it,i)=>({ ...it, position:i+1 }));
+      reorderRibbon(withPos);
+      return withPos;
+    });
+  };
+  const uploadRibbonMedia = async (id, file) => {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('media', file);
+    await api.post(`/admin/ribbon/${id}/media`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  };
+
+  const normalizeRole = (v) => {
+    const cur = String(v ?? '').trim().toLowerCase();
+    if (cur === 'administrator' || cur === 'admin1' || cur === 'admin  ') return 'admin';
+    return cur;
+  };
+  const roleLower = normalizeRole(user?.role);
+  console.debug('[AdminDashboard] render', { tab, roleLower, rawRole: user?.role });
   return (
     <div>
       <h2>Admin Dashboard</h2>
       <div className="tabs" style={{ display:'flex', gap:8, marginBottom:12 }}>
         <button className={`button ${tab==='products'?"":"ghost"}`} onClick={()=>setTab('products')}>Products</button>
         <button className={`button ${tab==='vendors'?"":"ghost"}`} onClick={()=>setTab('vendors')}>Vendors {pendingCount>0 && <span className="badge" style={{ marginLeft:6 }}>{pendingCount}</span>}</button>
-        <button className={`button ${tab==='categories'?"":"ghost"}`} onClick={()=>setTab('categories')}>Categories</button>
-        {user?.role === 'super_admin' && (
-          <button className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
+        {(roleLower === 'admin' || roleLower === 'super_admin') && (
+          <>
+            <button className={`button ${tab==='categories'?"":"ghost"}`} onClick={()=>setTab('categories')}>Categories</button>
+            <button className={`button ${tab==='ribbon'?"":"ghost"}`} onClick={()=>{ console.log('[Ribbon] Tab clicked'); setTab('ribbon'); }}>Ribbon</button>
+            <button className={`button ${tab==='reviews'?"":"ghost"}`} onClick={()=>setTab('reviews')}>Reviews</button>
+          </>
         )}
+        {/* Admins tab hidden for super_admin on AdminDashboard; use dedicated Super Admin dashboard */}
         {/* Featured tab removed for super_admin; use dedicated Super Admin dashboard */}
       </div>
       {tab === 'products' && (
@@ -379,6 +578,14 @@ export default function AdminDashboard() {
               <input className="input" placeholder="Email" value={newAdmin.email} onChange={e=>setNewAdmin(f=>({ ...f, email:e.target.value }))} />
               <input className="input" placeholder="Name (optional)" value={newAdmin.name} onChange={e=>setNewAdmin(f=>({ ...f, name:e.target.value }))} />
               <input className="input" placeholder="Password" type="password" value={newAdmin.password} onChange={e=>setNewAdmin(f=>({ ...f, password:e.target.value }))} />
+              <input className="input" placeholder="Confirm Password" type="password" value={newAdmin.confirm_password} onChange={e=>setNewAdmin(f=>({ ...f, confirm_password:e.target.value }))} />
+              <div className="row" style={{ alignItems:'center', gap:8 }}>
+                <label className="small">Role</label>
+                <select className="input" value={newAdmin.role} onChange={e=>setNewAdmin(f=>({ ...f, role:e.target.value }))}>
+                  <option value="admin">Admin</option>
+                  <option value="admin2">Admin2</option>
+                </select>
+              </div>
               <div style={{ gridColumn:'1 / -1', display:'flex', justifyContent:'flex-end' }}>
                 <button className="button" type="submit">Create</button>
               </div>
@@ -431,6 +638,157 @@ export default function AdminDashboard() {
                 )}
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {(tab === 'reviews' || tab === 'reviews_super') && (roleLower === 'admin' || roleLower === 'super_admin') && (
+        console.log('Rendering Reviews tab', tab, roleLower, allReviews.length),
+        <section className="stack" style={{ gap:12 }}>
+          <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
+            <h3 style={{ margin:0 }}>Product Reviews {roleLower !== 'super_admin' && <span className="small muted">• view-only</span>}</h3>
+            <button className="button ghost" onClick={loadReviews} disabled={reviewsLoading}>Reload</button>
+          </div>
+          {reviewsError && <div className="card" style={{ padding:10, color:'crimson' }}>{reviewsError}</div>}
+          {reviewsLoading && <div className="card" style={{ padding:10 }}>Loading...</div>}
+          {!reviewsLoading && !reviewsError && (
+            <div className="stack" style={{ gap:8 }}>
+              {allReviews.length === 0 && <div className="small muted">No reviews found.</div>}
+              {allReviews.map(rv => (
+                <div key={rv.id} className="card" style={{ padding:12 }}>
+                  <div className="row" style={{ justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                    <div>
+                      <div><strong>{rv.product_title}</strong> <span className="small muted">• by {rv.user_name || rv.user_email || 'User'}</span></div>
+                      <div className="small" style={{ marginTop:4 }}>Rating: <strong>{rv.rating}</strong></div>
+                      {rv.comment && <div style={{ marginTop:6 }}>{rv.comment}</div>}
+                      <div className="small muted" style={{ marginTop:6 }}>{new Date(rv.created_at).toLocaleString()}</div>
+                    </div>
+                    {roleLower === 'super_admin' && (
+                      <div className="row" style={{ gap:6 }}>
+                        <button className="button ghost" onClick={()=>deleteReview(rv.id)}>Delete</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'ribbon' && (roleLower === 'admin' || roleLower === 'super_admin') && (
+        console.log('Rendering Ribbon tab', tab, roleLower, ribbonItems.length),
+        <section ref={ribbonSectionRef} className="stack" style={{ gap:12 }}>
+          <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
+            <h3 style={{ margin:0 }}>Ribbon Manager</h3>
+            <button className="button ghost" onClick={loadRibbon} disabled={ribbonLoading}>Reload</button>
+          </div>
+          <div className="card" style={{ padding:10, border:'1px dashed rgba(255,255,255,.25)' }}>
+            <strong>Ribbon Debug:</strong> Section rendered. If you don't see list items, create one using the form below. Check Console for "[Ribbon]" logs.
+          </div>
+          <div className="card" style={{ padding:12 }}>
+            <h3 style={{ marginTop:0 }}>{ribbonEditingId ? 'Edit Ribbon Item' : 'Create Ribbon Item'}</h3>
+            <form className="grid" style={{ gridTemplateColumns:'1fr 1fr', gap:8 }} onSubmit={ribbonEditingId ? (e)=>{ e.preventDefault(); saveRibbon(ribbonEditingId);} : createRibbon}>
+              <input className="input" placeholder="Title" value={ribbonForm.title} onChange={e=>setRibbonForm(f=>({ ...f, title:e.target.value }))} />
+              <input className="input" placeholder="CTA Label (optional)" value={ribbonForm.cta_label} onChange={e=>setRibbonForm(f=>({ ...f, cta_label:e.target.value }))} />
+              <input className="input" placeholder="CTA URL (optional)" value={ribbonForm.cta_url} onChange={e=>setRibbonForm(f=>({ ...f, cta_url:e.target.value }))} />
+              <select className="input" value={ribbonForm.media_type} onChange={e=>setRibbonForm(f=>({ ...f, media_type:e.target.value }))}>
+                <option value="">Media Type (optional)</option>
+                <option value="image">Image</option>
+                <option value="gif">GIF</option>
+                <option value="video">Video</option>
+              </select>
+              <textarea className="input" style={{ gridColumn:'1 / -1' }} rows={3} placeholder="Body (optional)" value={ribbonForm.body} onChange={e=>setRibbonForm(f=>({ ...f, body:e.target.value }))} />
+              <div style={{ gridColumn:'1 / -1' }}>
+                <label>Upload Media (image/gif/video)</label>
+                <input className="input" type="file" accept="image/*,video/*" onChange={(e)=>setRibbonUploadFile(e.target.files?.[0]||null)} />
+              </div>
+              <div style={{ gridColumn:'1 / -1', display:'flex', gap:8, justifyContent:'flex-end' }}>
+                {ribbonEditingId && <button type="button" className="button ghost" onClick={cancelRibbonEdit}>Cancel</button>}
+                <button className="button" type="submit">{ribbonEditingId ? 'Save' : 'Create'}</button>
+              </div>
+            </form>
+          </div>
+
+          {/* Live Preview */}
+          <div className="card" style={{ padding:12 }}>
+            <h3 style={{ marginTop:0 }}>Preview</h3>
+            {(() => {
+              const sel = ribbonEditingId ? { ...ribbonForm } : (ribbonItems[ribbonSelectedIndex] || {});
+              const title = sel.title || '(title)';
+              const body = sel.body || '';
+              const ctaLabel = sel.cta_label || '';
+              const ctaUrl = sel.cta_url || '#';
+              const mediaUrl = sel.media_url || '';
+              const mediaType = sel.media_type || (mediaUrl && /\.(mp4|webm|ogg)$/i.test(mediaUrl) ? 'video' : (mediaUrl ? 'image' : ''));
+              return (
+                <div className="pc-card" style={{ background:'var(--surface-2)', borderRadius:12, overflow:'hidden' }}>
+                  <div className="pc-split" style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr', gap:16, alignItems:'center', width:'100%', minHeight:180 }}>
+                    <div className="pc-split-left" style={{ padding:'12px 16px' }}>
+                      <div className="pc-title" style={{ marginBottom:6 }}>{title}</div>
+                      {body && <div className="pc-text" style={{ marginBottom:10 }}>{body}</div>}
+                      {ctaLabel && <a className="button" href={ctaUrl}>{ctaLabel}</a>}
+                    </div>
+                    <div className="pc-split-right" style={{ padding:'8px 12px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      {mediaUrl ? (
+                        mediaType === 'video' ? (
+                          <video src={mediaUrl} muted playsInline autoPlay loop preload="metadata" style={{ maxWidth:'100%', maxHeight:220, borderRadius:8 }} />
+                        ) : (
+                          <img src={mediaUrl} alt="preview" loading="lazy" decoding="async" style={{ maxWidth:'100%', maxHeight:220, borderRadius:8 }} />
+                        )
+                      ) : (
+                        <div className="small muted">No media</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="card" style={{ padding:12 }}>
+            <h3 style={{ marginTop:0 }}>Ribbon Items</h3>
+            {ribbonLoading && <div className="small">Loading ribbon items…</div>}
+            {ribbonError && <div className="error" role="alert">{ribbonError}</div>}
+            {!ribbonLoading && !ribbonError && ribbonItems.length === 0 && <div className="small muted">No ribbon items yet</div>}
+            <div className="stack" style={{ gap:8 }}>
+              {ribbonItems.map((it, idx) => (
+                <div
+                  key={it.id}
+                  className="row"
+                  style={{ gap:8, alignItems:'center', border:'1px solid rgba(0,0,0,0.08)', borderRadius:8, padding:8, background: ribbonSelectedIndex===idx ? 'rgba(0,0,0,0.04)' : 'transparent', cursor:'grab' }}
+                  draggable
+                  onDragStart={()=>onRibbonDragStart(idx)}
+                  onDragOver={(e)=>onRibbonDragOver(e, idx)}
+                  onDrop={(e)=>onRibbonDrop(e, idx)}
+                  onClick={()=>setRibbonSelectedIndex(idx)}
+                >
+                  <span className="pill">{idx+1}</span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontWeight:700, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{it.title || '(no title)'}</div>
+                    <div className="small muted" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{it.body || ''}</div>
+                    <div className="small muted">
+                      {it.media_type ? `Media: ${it.media_type}` : 'No media'} {it.media_url ? '• uploaded' : ''}
+                    </div>
+                  </div>
+                  <label className="row" style={{ gap:6 }}>
+                    <input type="checkbox" checked={!!it.enabled} onChange={(e)=>toggleRibbon(it.id, e.target.checked)} />
+                    <span className="small">Enabled</span>
+                  </label>
+                  <div className="row" style={{ gap:6 }}>
+                    <button className="button ghost" onClick={()=>moveRibbonUp(idx)} disabled={idx===0}>Up</button>
+                    <button className="button ghost" onClick={()=>moveRibbonDown(idx)} disabled={idx===ribbonItems.length-1}>Down</button>
+                  </div>
+                  <div className="row" style={{ gap:6 }}>
+                    <button className="button" onClick={()=>editRibbon(it)}>Edit</button>
+                    <button className="button ghost" onClick={()=>deleteRibbon(it.id)}>Delete</button>
+                  </div>
+                  <div>
+                    <input className="input" type="file" accept="image/*,video/*" onChange={async (e)=>{ const f=e.target.files?.[0]; if (f) { await uploadRibbonMedia(it.id, f); await loadRibbon(); e.target.value=''; } }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -496,46 +854,57 @@ export default function AdminDashboard() {
         </section>
       )}
 
-      {tab === 'categories' && (
-        <section>
-          <h3>Categories</h3>
-          <form className="row" style={{ gap:8, marginBottom:12 }} onSubmit={async (e)=>{
-            e.preventDefault();
-            await api.post('/categories', catForm);
-            setCatForm({ name:'', slug:'' });
-            const { data } = await api.get('/categories');
-            setCategories(data);
-          }}>
-            <input className="input" placeholder="Name" value={catForm.name} onChange={e=>setCatForm(f=>({ ...f, name:e.target.value }))} />
-            <input className="input" placeholder="Slug" value={catForm.slug} onChange={e=>setCatForm(f=>({ ...f, slug:e.target.value }))} />
-            <button className="button" type="submit">Add</button>
-          </form>
-          <div className="stack" style={{ gap:8 }}>
-            {categories.map(c => (
-              <div key={c.id} className="row" style={{ gap:8, alignItems:'center' }}>
-                {catEditingId === c.id ? (
-                  <>
-                    <input className="input" value={catEdit.name} onChange={e=>setCatEdit(f=>({ ...f, name:e.target.value }))} />
-                    <input className="input" value={catEdit.slug} onChange={e=>setCatEdit(f=>({ ...f, slug:e.target.value }))} />
-                    <button className="button" onClick={async ()=>{
-                      await api.put(`/categories/${c.id}`, catEdit);
-                      setCatEditingId(null);
-                      const { data } = await api.get('/categories');
-                      setCategories(data);
-                    }}>Save</button>
-                    <button className="button ghost" onClick={()=>setCatEditingId(null)}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ minWidth:140 }}><strong>{c.name}</strong></div>
-                    <div className="small" style={{ flex:1 }}>{c.slug}</div>
-                    <button className="button" onClick={()=>{ setCatEditingId(c.id); setCatEdit({ name:c.name, slug:c.slug }); }}>Edit</button>
-                    <button className="button ghost" onClick={async ()=>{ await api.delete(`/categories/${c.id}`); const { data } = await api.get('/categories'); setCategories(data); }}>Delete</button>
-                  </>
-                )}
-              </div>
-            ))}
+      {tab === 'categories' && (roleLower === 'admin' || roleLower === 'super_admin') && (
+        console.log('Rendering Categories tab', tab, roleLower, categories.length),
+        <section className="stack" style={{ gap:12 }}>
+          <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
+            <h3 style={{ margin:0 }}>Categories</h3>
+            <button className="button ghost" onClick={loadCategories} disabled={categoriesLoading}>Reload</button>
           </div>
+          {categoriesError && <div className="card" style={{ padding:10, color:'crimson' }}>{categoriesError}</div>}
+          {categoriesLoading && <div className="card" style={{ padding:10 }}>Loading...</div>}
+          {!categoriesLoading && !categoriesError && (
+            <>
+              <form className="row" style={{ gap:8, marginBottom:12 }} onSubmit={async (e)=>{
+                e.preventDefault();
+                await api.post('/categories', catForm);
+                setCatForm({ name:'', slug:'' });
+                await loadCategories();
+              }}>
+                <input className="input" placeholder="Name" value={catForm.name} onChange={e=>setCatForm(f=>({ ...f, name:e.target.value }))} />
+                <input className="input" placeholder="Slug" value={catForm.slug} onChange={e=>setCatForm(f=>({ ...f, slug:e.target.value }))} />
+                <button className="button" type="submit">Add</button>
+              </form>
+              <div className="stack" style={{ gap:8 }}>
+                {categories.length === 0 && (
+                  <div className="small muted">No categories yet</div>
+                )}
+                {categories.map(c => (
+                  <div key={c.id} className="row" style={{ gap:8, alignItems:'center' }}>
+                    {catEditingId === c.id ? (
+                      <>
+                        <input className="input" value={catEdit.name} onChange={e=>setCatEdit(f=>({ ...f, name:e.target.value }))} />
+                        <input className="input" value={catEdit.slug} onChange={e=>setCatEdit(f=>({ ...f, slug:e.target.value }))} />
+                        <button className="button" onClick={async ()=>{
+                          await api.put(`/categories/${c.id}`, catEdit);
+                          setCatEditingId(null);
+                          await loadCategories();
+                        }}>Save</button>
+                        <button className="button ghost" onClick={()=>setCatEditingId(null)}>Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ minWidth:140 }}><strong>{c.name}</strong></div>
+                        <div className="small" style={{ flex:1 }}>{c.slug}</div>
+                        <button className="button" onClick={()=>{ setCatEditingId(c.id); setCatEdit({ name:c.name, slug:c.slug }); }}>Edit</button>
+                        <button className="button ghost" onClick={async ()=>{ await api.delete(`/categories/${c.id}`); await loadCategories(); }}>Delete</button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       )}
                   <div style={{ gridColumn:'1 / -1' }}>

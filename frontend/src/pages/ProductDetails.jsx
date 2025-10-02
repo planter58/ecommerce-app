@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useLayoutEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchProduct, fetchProducts } from '../api/products';
 import { CartContext } from '../context/CartContext.jsx';
@@ -18,6 +18,11 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState(null);
   const [vw, setVw] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
 
+  // Scroll to top immediately before paint on product id change
+  useLayoutEffect(() => {
+    try { window.scrollTo(0, 0); } catch {}
+  }, [id]);
+
   useEffect(() => {
     fetchProduct(id).then(async (p) => {
       setProduct(p);
@@ -34,8 +39,6 @@ export default function ProductDetails() {
       }
     });
     fetchProductReviews(id).then(setReviews);
-    // Ensure we start from top when navigating to a new similar product
-    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
   }, [id]);
 
   // Track viewport width to drive responsive columns (JS-based to avoid CSS edits)
@@ -89,7 +92,14 @@ export default function ProductDetails() {
               <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
                 {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
                 {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
-                <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
+                <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer', color: (Number(product.avg_rating || 0) === 0 ? '#888' : undefined) }}>
+                  {(() => {
+                    const avg = Number(product.avg_rating || 0);
+                    const fixed2 = avg.toFixed(2);
+                    const display = avg === 0 ? '0' : (fixed2.endsWith('00') ? String(Math.trunc(avg)) : String(parseFloat(fixed2)));
+                    return <>Rating: <strong>{display}</strong></>;
+                  })()}
+                </Link>
               </div>
               {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
               <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -98,7 +108,30 @@ export default function ProductDetails() {
                 <div className="input" style={{ width:48, textAlign:'center' }}>{qty}</div>
                 <button type="button" className="button ghost" onClick={()=>setQty(q => q+1)}>+</button>
               </div>
+              {/* Live subtotal updates immediately with qty */}
+              <div className="mt-8" style={{ fontSize:16 }}>
+                <div><strong>Subtotal:</strong> KSh {(((product.price_cents || 0) * qty)/100).toFixed(2)}</div>
+                <div className="small muted">KSh {(product.price_cents/100).toFixed(2)} x {qty}</div>
+              </div>
               <div className="mt-16">
+                {/* Clickable review stars positioned above the Details heading */}
+                <div className="small" style={{ margin: '0 0 8px 0' }}>
+                  <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer', display:'inline-flex', alignItems:'center', gap:8 }}>
+                    {(() => {
+                      const avg = Number(product.avg_rating || 0);
+                      const fixed2 = avg.toFixed(2);
+                      const display = avg === 0 ? '0' : (fixed2.endsWith('00') ? String(Math.trunc(avg)) : String(parseFloat(fixed2)));
+                      const count = product.rating_count || 0;
+                      return (
+                        <>
+                          <span style={{ color:'#f5b50a', fontSize: 18 }}>{'⭐'.repeat(Math.round(avg))}</span>
+                          <span style={{ color: avg === 0 ? '#888' : undefined }}><strong>{display}</strong></span>
+                          <span style={{ marginLeft: 10, color:'#888' }}>({count}) Customers reviews</span>
+                        </>
+                      );
+                    })()}
+                  </Link>
+                </div>
                 <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
                 <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
               </div>
@@ -144,7 +177,14 @@ export default function ProductDetails() {
             <div className="meta mt-8" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
               {product.vendor_name && <span>Sold by: <strong>{product.vendor_name}</strong></span>}
               {typeof product.stock === 'number' && <span>Stock remaining: <strong>{product.stock}</strong></span>}
-              <span>Rating: <strong>{product.avg_rating?.toFixed ? product.avg_rating.toFixed(2) : product.avg_rating}/5</strong> ({product.rating_count || 0})</span>
+              <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer', color: (Number(product.avg_rating || 0) === 0 ? '#888' : undefined) }}>
+                {(() => {
+                  const avg = Number(product.avg_rating || 0);
+                  const fixed2 = avg.toFixed(2);
+                  const display = avg === 0 ? '0' : (fixed2.endsWith('00') ? String(Math.trunc(avg)) : String(parseFloat(fixed2)));
+                  return <>Rating: <strong>{display}</strong></>;
+                })()}
+              </Link>
             </div>
             {product.category_name && <div className="meta mt-16">Category: {product.category_name}</div>}
             <div className="mt-16" style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -153,7 +193,30 @@ export default function ProductDetails() {
               <div className="input" style={{ width:48, textAlign:'center' }}>{qty}</div>
               <button type="button" className="button ghost" onClick={()=>setQty(q => q+1)}>+</button>
             </div>
+            {/* Live subtotal updates immediately with qty */}
+            <div className="mt-8" style={{ fontSize:16 }}>
+              <div><strong>Subtotal:</strong> KSh {(((product.price_cents || 0) * qty)/100).toFixed(2)}</div>
+              <div className="small muted">KSh {(product.price_cents/100).toFixed(2)} x {qty}</div>
+            </div>
             <div className="mt-16">
+              {/* Clickable review stars positioned above the Details heading */}
+              <div className="small" style={{ margin: '0 0 8px 0' }}>
+                <Link to={`/product/${product.id}/reviews`} className="link" style={{ cursor:'pointer', display:'inline-flex', alignItems:'center', gap:8 }}>
+                  {(() => {
+                    const avg = Number(product.avg_rating || 0);
+                    const fixed2 = avg.toFixed(2);
+                    const display = avg === 0 ? '0' : (fixed2.endsWith('00') ? String(Math.trunc(avg)) : String(parseFloat(fixed2)));
+                    const count = product.rating_count || 0;
+                    return (
+                      <>
+                        <span style={{ color:'#f5b50a', fontSize: 18 }}>{'⭐'.repeat(Math.round(avg))}</span>
+                        <span style={{ color: avg === 0 ? '#888' : undefined }}><strong>{display}</strong></span>
+                        <span style={{ marginLeft: 10, color:'#888' }}>({count}) Customers reviews</span>
+                      </>
+                    );
+                  })()}
+                </Link>
+              </div>
               <h4 style={{ margin: '12px 0 8px 0' }}>Details</h4>
               <p className="mt-8" style={{ whiteSpace: 'pre-wrap' }}>{product.description || 'No description provided.'}</p>
             </div>

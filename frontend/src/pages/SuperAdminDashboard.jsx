@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useContext, memo } from 'react';
 import api from '../api/client';
 import { AuthContext } from '../context/AuthContext.jsx';
 import Pagination from '../components/Pagination.jsx';
+import Admin2Dashboard from './Admin2Dashboard.jsx';
 
 export default function SuperAdminDashboard() {
   const { user } = useContext(AuthContext);
@@ -9,7 +10,7 @@ export default function SuperAdminDashboard() {
   const [adminQuery, setAdminQuery] = useState('');
   const [adminStatus, setAdminStatus] = useState('');
   const [admins, setAdmins] = useState([]);
-  const [newAdmin, setNewAdmin] = useState({ email:'', name:'', password:'', confirm_password:'' });
+  const [newAdmin, setNewAdmin] = useState({ email:'', name:'', password:'', confirm_password:'', role:'admin' });
   const [createError, setCreateError] = useState('');
   const [createSuccess, setCreateSuccess] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -32,6 +33,11 @@ export default function SuperAdminDashboard() {
     suggestionsPages: new Map(), // key: `${q}|${page}|${limit}` => items
     suggestionsTotals: new Map(), // key: `${q}` => total
   });
+
+  // Reviews moderation state (super_admin)
+  const [allReviews, setAllReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
 
   const loadAdmins = async () => {
     const { data } = await api.get('/admin/admins', { params: { q: adminQuery || undefined, status: adminStatus || undefined } });
@@ -83,6 +89,23 @@ export default function SuperAdminDashboard() {
       }
     })();
   }, [tab, suggQuery, suggPage, suggLimit]);
+
+  // Load all reviews when Reviews tab opens
+  const loadReviews = async () => {
+    setReviewsError('');
+    setReviewsLoading(true);
+    try {
+      const { data } = await api.get('/admin/reviews', { params: { limit: 500 } });
+      setAllReviews(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setReviewsError(e?.response?.data?.message || e?.message || 'Failed to load reviews');
+      setAllReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+  useEffect(() => { if (tab === 'reviews') loadReviews(); }, [tab]);
+  const deleteReview = async (id) => { try { await api.delete(`/admin/reviews/${id}`); await loadReviews(); } catch {} };
 
   const moveUp = (idx) => {
     if (idx <= 0) return;
@@ -183,9 +206,10 @@ export default function SuperAdminDashboard() {
     if (!newAdmin.email) { setCreateError('Email is required'); return; }
     if (newAdmin.password && newAdmin.password !== newAdmin.confirm_password) { setCreateError('Passwords do not match'); return; }
     try {
-      await api.post('/admin/admins', newAdmin);
-      setNewAdmin({ email:'', name:'', password:'', confirm_password:'' });
-      setCreateSuccess('Admin created');
+      const payload = { ...newAdmin, role: (newAdmin.role || 'admin').trim().toLowerCase() };
+      const { data } = await api.post('/admin/admins', payload);
+      setNewAdmin({ email:'', name:'', password:'', confirm_password:'', role:'admin' });
+      setCreateSuccess(`Admin created as role: ${data?.role || payload.role || 'admin'}`);
       await loadAdmins();
     } catch (err) {
       setCreateError(err?.response?.data?.message || 'Failed to create admin');
@@ -214,6 +238,8 @@ export default function SuperAdminDashboard() {
       <div className="tabs" style={{ display:'flex', gap:8, marginBottom:12 }}>
         <button type="button" className={`button ${tab==='admins'?"":"ghost"}`} onClick={()=>setTab('admins')}>Admins</button>
         <button type="button" className={`button ${tab==='featured'?"":"ghost"}`} onClick={()=>setTab('featured')}>Featured</button>
+        <button type="button" className={`button ${tab==='reviews'?"":"ghost"}`} onClick={()=>setTab('reviews')}>Reviews</button>
+        <button type="button" className={`button ${tab==='admin2'?"":"ghost"}`} onClick={()=>setTab('admin2')}>Admin2</button>
       </div>
 
       {tab === 'admins' && (
@@ -249,9 +275,16 @@ export default function SuperAdminDashboard() {
                 <input className="input" placeholder="Confirm Password" type={showPwd2?'text':'password'} value={newAdmin.confirm_password} onChange={e=>setNewAdmin(f=>({ ...f, confirm_password:e.target.value }))} />
                 <button className="button ghost" type="button" onClick={()=>setShowPwd2(s=>!s)} aria-label="Toggle confirm password visibility">{showPwd2?'Hide':'Show'}</button>
               </div>
+              <div className="row" style={{ gap:6, alignItems:'center' }}>
+                <label className="small">Role</label>
+                <select className="input" value={newAdmin.role} onChange={e=>setNewAdmin(f=>({ ...f, role:e.target.value }))}>
+                  <option value="admin">Admin</option>
+                  <option value="admin2">Admin2</option>
+                </select>
+              </div>
               <div style={{ gridColumn:'1 / -1', display:'flex', justifyContent:'flex-end', gap:8 }}>
                 <button className="button" type="submit" disabled={!newAdmin.email || (newAdmin.password && !newAdmin.confirm_password)}>Create</button>
-                <button className="button ghost" type="button" onClick={()=>{ setNewAdmin({ email:'', name:'', password:'', confirm_password:'' }); setCreateError(''); setCreateSuccess(''); }}>Clear</button>
+                <button className="button ghost" type="button" onClick={()=>{ setNewAdmin({ email:'', name:'', password:'', confirm_password:'', role:'admin' }); setCreateError(''); setCreateSuccess(''); }}>Clear</button>
               </div>
             </form>
           </div>
@@ -273,14 +306,17 @@ export default function SuperAdminDashboard() {
                   <div>
                     <div className="row" style={{ alignItems:'center', gap:8 }}>
                       <input type="checkbox" checked={selectedAdmins.includes(a.id)} onChange={e=>toggleSelectAdmin(a.id, e.target.checked)} />
-                      <div><strong>{a.email}</strong> {a.name ? <span className="small muted">• {a.name}</span> : null}</div>
+                      <div>
+                        <strong>{a.email}</strong> {a.name ? <span className="small muted">• {a.name}</span> : null}
+                        <div className="small muted">Role: {a.role}</div>
+                      </div>
                     </div>
                     <div className="small">Status: {a.status || 'active'}</div>
                   </div>
                   <div className="row" style={{ gap:6 }}>
                     {a.status !== 'active' && <button className="button" onClick={()=>setAdminActive(a.id)}>Activate</button>}
                     {a.status !== 'suspended' && <button className="button ghost" onClick={()=>setAdminSuspended(a.id)}>Suspend</button>}
-                    {a.role === 'admin' ? (
+                    {(a.role === 'admin' || a.role === 'admin2') ? (
                       <>
                         <button className="button ghost" onClick={()=>demoteAdmin(a.id)}>Demote</button>
                         <button className="button ghost" onClick={()=>removeAdmin(a.id)}>Delete</button>
@@ -366,6 +402,43 @@ export default function SuperAdminDashboard() {
               <Pagination page={suggPage} total={suggTotal} limit={suggLimit} onPageChange={setSuggPage} />
             </div>
           </div>
+        </section>
+      )}
+
+      {tab === 'reviews' && (
+        <section className="stack" style={{ gap:12 }}>
+          <div className="row" style={{ justifyContent:'space-between', alignItems:'center' }}>
+            <h3 style={{ margin:0 }}>Product Reviews</h3>
+            <button type="button" className="button ghost" onClick={loadReviews} disabled={reviewsLoading}>Reload</button>
+          </div>
+          {reviewsError && <div className="card" style={{ padding:10, color:'crimson' }}>{reviewsError}</div>}
+          {reviewsLoading && <div className="card" style={{ padding:10 }}>Loading...</div>}
+          {!reviewsLoading && !reviewsError && (
+            <div className="stack" style={{ gap:8 }}>
+              {allReviews.length === 0 && <div className="small muted">No reviews found.</div>}
+              {allReviews.map(rv => (
+                <div key={rv.id} className="card" style={{ padding:12 }}>
+                  <div className="row" style={{ justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                    <div>
+                      <div><strong>{rv.product_title}</strong> <span className="small muted">• by {rv.user_name || rv.user_email || 'User'}</span></div>
+                      <div className="small" style={{ marginTop:4 }}>Rating: <strong>{rv.rating}</strong></div>
+                      {rv.comment && <div style={{ marginTop:6 }}>{rv.comment}</div>}
+                      <div className="small muted" style={{ marginTop:6 }}>{new Date(rv.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="row" style={{ gap:6 }}>
+                      <button type="button" className="button ghost" onClick={()=>deleteReview(rv.id)}>Delete</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'admin2' && (
+        <section className="stack" style={{ gap:12 }}>
+          <Admin2Dashboard />
         </section>
       )}
     </div>

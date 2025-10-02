@@ -62,7 +62,18 @@ export default function CartProvider({ children }) {
   };
   const updateQty = async (productId, quantity) => {
     if (token()) {
-      await apiUpdate(productId, quantity); await refresh();
+      // Optimistic update: update UI immediately
+      const prev = items;
+      const next = prev.map(i => i.product_id === productId ? { ...i, quantity } : i);
+      setItems(next);
+      try {
+        await apiUpdate(productId, quantity);
+        // Sync from server to ensure authoritative totals/validations
+        await refresh();
+      } catch (e) {
+        // Rollback on failure
+        setItems(prev);
+      }
     } else {
       const current = readGuest();
       const idx = current.findIndex(i => i.product_id === productId);

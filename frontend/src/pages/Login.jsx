@@ -22,6 +22,7 @@ export default function Login() {
       await mergeGuestToServer();
       if (user.role === 'super_admin') navigate('/super-admin');
       else if (user.role === 'admin') navigate('/admin');
+      else if (user.role === 'admin2') navigate('/admin2');
       else if (user.role === 'vendor') navigate('/vendor');
       else navigate('/');
     } catch (e) {

@@ -12,6 +12,9 @@ import paymentsRoutes from './routes/payments.routes.js';
 import vendorRoutes from './routes/vendor.routes.js';
 import reviewsRoutes from './routes/reviews.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import ribbonRoutes from './routes/ribbon.routes.js';
+import ribbonAdminRoutes from './routes/ribbon.admin.routes.js';
+import pesapalRoutes from './routes/pesapal.routes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import path from 'path';
 import profileRoutes from './routes/profile.routes.js';
@@ -20,7 +23,7 @@ import { query } from './config/db.js';
 loadEnv();
 
 const app = express();
-// Allow loading images from this server on different origins (e.g., Vite dev server)
+// Allow loading images-z from this server on different origins (e.g., Vite dev server)
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 // CORS: allow configured origin and common localhost/127.0.0.1 dev origins
 // Normalize CLIENT_ORIGIN to avoid trailing-slash mismatches
@@ -56,10 +59,14 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/pesapal', pesapalRoutes);
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile', profileRoutes);
+// Ribbon routes: public and admin
+app.use('/api/ribbon', ribbonRoutes);
+app.use('/api/admin/ribbon', ribbonAdminRoutes);
 
 // static uploads (enable CORS for image assets)
 app.use('/uploads', cors({ origin: corsDevCheck, credentials: true }), express.static(path.join(process.cwd(), 'uploads')));

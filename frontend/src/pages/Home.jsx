@@ -10,6 +10,10 @@ export default function Home() {
   const [params, setParams] = useState({ page: 1, limit: 40, q: '', category: '' });
   // Keep track of which page the data was fetched for to avoid showing stale responses
   const [data, setData] = useState({ items: [], total: 0, pageTag: 1 });
+  const [isLoading, setIsLoading] = useState(false);
+  // Retry tag to re-trigger fetching when login finishes and token becomes available
+  const [reloadTag, setReloadTag] = useState(0);
+  const retryRef = useRef(0);
   const isFeaturedMode = !params.q && !params.category;
   // Cache featured list, remaining pages, and combined page slices to avoid refetching
   // and recomputation when navigating between pages. Also preserve stable identity
@@ -30,6 +34,7 @@ export default function Home() {
     let isMounted = true;
     (async () => {
       try {
+        setIsLoading(true);
         if (isFeaturedMode) {
           // 1) Load curated featured (fixed order)
           let featured = cacheRef.current.featured;
@@ -116,6 +121,8 @@ export default function Home() {
               const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id) && prev.pageTag === pageAtStart;
               return same ? prev : { items, total, pageTag: pageAtStart };
             });
+            retryRef.current = 0; // reset retry counter on success
+            setIsLoading(false);
           }
         } else {
           let pd;
@@ -132,19 +139,33 @@ export default function Home() {
               const same = prev.total === total && prev.items.length === items.length && prev.items.every((x, i) => x.id === items[i].id) && prev.pageTag === pageAtStart;
               return same ? prev : { items, total, pageTag: pageAtStart };
             });
+            retryRef.current = 0; // reset retry counter on success
+            setIsLoading(false);
           }
         }
       } catch (e) {
         // Keep previous data on transient errors to avoid empty flashes
+        setIsLoading(false);
       }
+      // If after this run the list is still empty and we recently logged in,
+      // retry a few times to pick up the new token without requiring a full refresh.
+      try {
+        const stillEmpty = (!data?.items || data.items.length === 0);
+        const hasToken = !!localStorage.getItem('token');
+        if (stillEmpty && hasToken && retryRef.current < 6 && isMounted) {
+          retryRef.current += 1;
+          setTimeout(() => setReloadTag(t => t + 1), 500);
+        }
+      } catch {}
     })();
     return () => { isMounted = false; };
-  }, [params, isFeaturedMode]);
+  }, [params, isFeaturedMode, reloadTag]);
 
   // Always reset scroll to top when changing page, query, or category
   useLayoutEffect(() => {
     try {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      // Use instant scroll to avoid white flashes on some devices
+      window.scrollTo(0, 0);
     } catch {
       // no-op
     }
@@ -186,16 +207,39 @@ export default function Home() {
     return cached || [];
   }, [isFeaturedMode, params.page, data.items, data.items?.length, data.pageTag]);
 
+  // Derive a stable total for pagination (avoid disabling controls when data lags)
+  const effectiveTotal = useMemo(() => {
+    if (isFeaturedMode) {
+      const t = cacheRef.current.combinedTotals.get(params.page);
+      if (typeof t === 'number' && t > 0) return t;
+    }
+    return data.total || 0;
+  }, [isFeaturedMode, params.page, data.total]);
+
   return (
     <div>
-      <PromoCarousel className="full-viewport" />
+      <PromoCarousel className="full-viewport" mode="compact" />
       <SearchBar onSearch={(q)=>setParams(p=>({ ...p, q, page:1 }))} />
       <CategoryFilter onChange={(category)=>setParams(p=>({ ...p, category, page:1 }))} />
       <div className="grid" style={{ willChange:'transform', transform:'translateZ(0)', backfaceVisibility:'hidden', contain:'layout paint' }}>
-        {itemsToRender.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+        {(itemsToRender.length === 0 && isLoading) ? (
+          Array.from({ length: 12 }).map((_, i) => (
+            <div key={`sk-${i}`} className="card" aria-hidden style={{ position:'relative' }}>
+              <div style={{ width:'100%', aspectRatio:'4 / 3', background:'rgba(128,128,128,0.12)', overflow:'hidden' }}>
+                <div style={{ width:'60%', height:8, background:'rgba(255,255,255,0.5)', margin:'12px', borderRadius:4 }} />
+              </div>
+              <div className="body" style={{ padding:'8px 4px' }}>
+                <div style={{ height:12, background:'rgba(128,128,128,0.12)', borderRadius:4, marginBottom:6 }} />
+                <div style={{ height:10, width:'70%', background:'rgba(128,128,128,0.1)', borderRadius:4 }} />
+              </div>
+            </div>
+          ))
+        ) : (
+          itemsToRender.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)
+        )}
       </div>
-      {((data.total || 0) > params.limit) && (
-        <Pagination page={params.page} total={data.total} limit={params.limit}
+      {((effectiveTotal || 0) > params.limit) && (
+        <Pagination page={params.page} total={effectiveTotal} limit={params.limit}
           onPageChange={(page)=>setParams(p=>({ ...p, page }))} />
       )}
     </div>
