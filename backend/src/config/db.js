@@ -10,7 +10,12 @@ const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: false } : false
+  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  // Improve connection stability on managed providers
+  keepAlive: true,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: Number(process.env.PG_POOL_MAX || 10),
 });
 
 // Optional debug: print DB connection info (non-sensitive) when diagnosing prod issues
