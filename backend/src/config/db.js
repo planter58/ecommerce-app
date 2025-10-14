@@ -11,20 +11,21 @@ const { Pool } = pg;
 // Build effective connection string and options
 const pgSslEnabled = process.env.PG_SSL === 'true';
 let connectionString = process.env.DATABASE_URL || '';
+
+// Clean up connection string: remove sslmode params to avoid conflicts with ssl config
 try {
   if (connectionString && pgSslEnabled) {
     const url = new URL(connectionString);
-    const hasSslParam = url.searchParams.has('ssl') || url.searchParams.has('sslmode');
-    if (!hasSslParam) {
-      // Ensure ssl negotiation required on providers that close non-SSL connections
-      url.searchParams.set('sslmode', 'require');
-      connectionString = url.toString();
-    }
+    // Remove any ssl-related query params - we'll handle SSL via the ssl config object
+    url.searchParams.delete('ssl');
+    url.searchParams.delete('sslmode');
+    connectionString = url.toString();
   }
 } catch {}
 
 const pool = new Pool({
   connectionString,
+  // For Supabase and other managed providers with self-signed certs
   ssl: pgSslEnabled ? { rejectUnauthorized: false } : false,
   // Improve connection stability on managed providers
   keepAlive: true,
