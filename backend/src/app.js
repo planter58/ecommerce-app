@@ -51,6 +51,30 @@ app.use(cors({ origin: corsDevCheck, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
+// Root route: API info
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'E-Commerce API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      products: '/api/products',
+      categories: '/api/categories',
+      cart: '/api/cart',
+      orders: '/api/orders',
+      payments: '/api/payments',
+      vendor: '/api/vendor',
+      reviews: '/api/reviews',
+      admin: '/api/admin',
+      profile: '/api/profile',
+      ribbon: '/api/ribbon'
+    },
+    documentation: 'https://github.com/yourusername/ecommerce-app'
+  });
+});
+
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
