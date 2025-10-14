@@ -24,6 +24,7 @@ if (process.env.AUTO_MIGRATE === 'true') {
       'sql/20250813_user_profile.sql',
       'sql/20250812_product_images.sql',
       'sql/20250813_was_admin.sql',
+      'sql/20250814_featured_products.sql',
       'sql/20250817_ribbon_items.sql',
       'sql/20250819_add_ribbon_mobile_bg_fields.sql',
     ];
