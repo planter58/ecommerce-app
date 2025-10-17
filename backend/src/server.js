@@ -27,6 +27,7 @@ if (process.env.AUTO_MIGRATE === 'true') {
       'sql/20250814_featured_products.sql',
       'sql/20250817_ribbon_items.sql',
       'sql/20250819_add_ribbon_mobile_bg_fields.sql',
+      'sql/seed.sql',
     ];
     console.log('AUTO_MIGRATE=true: applying migrations...');
     for (const f of files) {
