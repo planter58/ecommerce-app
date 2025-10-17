@@ -10,8 +10,8 @@ r.get('/', ctrl.listProducts);
 r.get('/featured', ctrl.getFeaturedProducts);
 r.get('/:id', ctrl.getProduct);
 
-r.post('/', authRequired, requireRole('admin'), upload.array('images', 8), ctrl.createProduct);
-r.put('/:id', authRequired, requireRole('admin'), upload.array('images', 8), ctrl.updateProduct);
-r.delete('/:id', authRequired, requireRole('admin'), ctrl.deleteProduct);
+r.post('/', authRequired, requireRole('admin','admin2','super_admin'), upload.array('images', 8), ctrl.createProduct);
+r.put('/:id', authRequired, requireRole('admin','admin2','super_admin'), upload.array('images', 8), ctrl.updateProduct);
+r.delete('/:id', authRequired, requireRole('admin','admin2','super_admin'), ctrl.deleteProduct);
 
 export default r;
