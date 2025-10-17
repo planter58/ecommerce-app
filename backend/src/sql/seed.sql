@@ -1,3 +1,9 @@
+-- Main super admin with custom credentials
+INSERT INTO users (email, password_hash, name, role)
+VALUES ('johnsonmbuguamuhabi@gmail.com', '$2a$10$m0lYsdnJwtVNuJr5jjr1IeVL8PaA3.NcLmQvuV4EZns1X6kFIoyMG', 'Johnson Mbugua', 'super_admin')
+ON CONFLICT (email) DO NOTHING;
+
+-- Backup admin account
 INSERT INTO users (email, password_hash, name, role)
 VALUES ('admin@example.com', '$2a$10$2nF8oJ0uGkBzI6Gm0v0zEezk3y2wQkqv1f1u1v6Yx4JwH4d7G6yha', 'Admin', 'admin')
 ON CONFLICT (email) DO NOTHING;
