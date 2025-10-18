@@ -17,8 +17,8 @@ async function getApprovedVendor(userId, userRole) {
     return { error: { status: 403, message: 'Not a vendor' } };
   }
   const vendor = rows[0];
-  // Admins (all types) and super_admins can bypass approval check
-  if (userRole === 'admin' || userRole === 'admin2' || userRole === 'super_admin') {
+  // Admins and super_admins can bypass approval check
+  if (userRole === 'admin' || userRole === 'super_admin') {
     return { vendor };
   }
   // Check if vendor is approved
@@ -54,9 +54,7 @@ export async function getMyVendor(req, res, next) {
     const { rows } = await query('SELECT * FROM vendors WHERE user_id=$1', [req.user.id]);
     if (!rows[0]) return res.status(404).json({ message: 'Not a vendor' });
     const v = rows[0];
-    // Allow admins and super_admins to bypass approval check
-    const isAdmin = req.user.role === 'admin' || req.user.role === 'admin2' || req.user.role === 'super_admin';
-    if (v.status && v.status !== 'approved' && !isAdmin) {
+    if (v.status && v.status !== 'approved' && req.user.role !== 'admin') {
       const msg = v.status === 'suspended'
         ? 'Your vendor account is suspended. Request access from the Admin.'
         : 'Your vendor account is pending approval. Request access from the Admin.';
