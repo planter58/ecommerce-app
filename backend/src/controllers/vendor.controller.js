@@ -10,27 +10,6 @@ function slugify(text) {
     .replace(/-+/g, '-');
 }
 
-// Helper to ensure vendor is approved
-async function getApprovedVendor(userId, userRole) {
-  const { rows } = await query('SELECT * FROM vendors WHERE user_id=$1', [userId]);
-  if (!rows[0]) {
-    return { error: { status: 403, message: 'Not a vendor' } };
-  }
-  const vendor = rows[0];
-  // Admins and super_admins can bypass approval check
-  if (userRole === 'admin' || userRole === 'super_admin') {
-    return { vendor };
-  }
-  // Check if vendor is approved
-  if (vendor.status !== 'approved') {
-    const msg = vendor.status === 'suspended'
-      ? 'Your vendor account is suspended. Contact admin for access.'
-      : 'Your vendor account is pending approval. Contact admin for access.';
-    return { error: { status: 403, message: msg, vendorStatus: vendor.status } };
-  }
-  return { vendor };
-}
-
 async function ensureCategoryByName(name) {
   const trimmed = String(name || '').trim();
   if (!trimmed) return null;
@@ -84,9 +63,6 @@ export async function updateMyVendor(req, res, next) {
 // Products owned by vendor
 export async function listMyProducts(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    
     const { rows } = await query(
       `SELECT p.*, c.name AS category_name, c.slug AS category_slug,
               COALESCE(
@@ -97,17 +73,17 @@ export async function listMyProducts(req, res, next) {
               ) AS images
        FROM products p
        LEFT JOIN categories c ON c.id = p.category_id
-       WHERE p.vendor_id=$1
-       ORDER BY p.updated_at DESC`, [vendor.id]);
+       WHERE p.vendor_id=(SELECT id FROM vendors WHERE user_id=$1)
+       ORDER BY p.updated_at DESC`, [req.user.id]);
     res.json(rows);
   } catch (e) { next(e); }
 }
 
 export async function createMyProduct(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    const vendorId = vendor.id;
+    const { rows: vRows } = await query('SELECT id FROM vendors WHERE user_id=$1', [req.user.id]);
+    if (!vRows[0]) return res.status(403).json({ message: 'Not a vendor' });
+    const vendorId = vRows[0].id;
     const { title, description, price_cents, compare_at_price_cents, currency='kes', stock=0 } = req.body;
     let category_id = req.body.category_id;
     const category_name = req.body.category_name;
@@ -156,9 +132,9 @@ export async function createMyProduct(req, res, next) {
 
 export async function updateMyProduct(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    const vendorId = vendor.id;
+    const { rows: vRows } = await query('SELECT id FROM vendors WHERE user_id=$1', [req.user.id]);
+    if (!vRows[0]) return res.status(403).json({ message: 'Not a vendor' });
+    const vendorId = vRows[0].id;
     const { title, description, price_cents, compare_at_price_cents, currency, stock } = req.body;
     let category_id = req.body.category_id;
     const category_name = req.body.category_name;
@@ -254,9 +230,9 @@ export async function updateMyProduct(req, res, next) {
 
 export async function deleteMyProduct(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    const vendorId = vendor.id;
+    const { rows: vRows } = await query('SELECT id FROM vendors WHERE user_id=$1', [req.user.id]);
+    if (!vRows[0]) return res.status(403).json({ message: 'Not a vendor' });
+    const vendorId = vRows[0].id;
     const { rowCount } = await query('DELETE FROM products WHERE id=$1 AND vendor_id=$2', [req.params.id, vendorId]);
     if (!rowCount) return res.status(404).json({ message: 'Not found' });
     res.status(204).send();
@@ -266,9 +242,9 @@ export async function deleteMyProduct(req, res, next) {
 // Orders for vendor
 export async function listMyOrderItems(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    const vendorId = vendor.id;
+    const { rows: vRows } = await query('SELECT id FROM vendors WHERE user_id=$1', [req.user.id]);
+    if (!vRows[0]) return res.status(403).json({ message: 'Not a vendor' });
+    const vendorId = vRows[0].id;
     const { rows } = await query(
       `SELECT oi.*, o.status AS order_status, o.created_at AS order_created_at,
               p.title AS product_title
@@ -283,9 +259,9 @@ export async function listMyOrderItems(req, res, next) {
 
 export async function markItemShipped(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    const vendorId = vendor.id;
+    const { rows: vRows } = await query('SELECT id FROM vendors WHERE user_id=$1', [req.user.id]);
+    if (!vRows[0]) return res.status(403).json({ message: 'Not a vendor' });
+    const vendorId = vRows[0].id;
     const { tracking_number } = req.body;
     const { rows } = await query(
       `UPDATE order_items SET vendor_item_status='shipped', tracking_number=COALESCE($3, tracking_number)
@@ -298,9 +274,9 @@ export async function markItemShipped(req, res, next) {
 
 export async function handleReturn(req, res, next) {
   try {
-    const { vendor, error } = await getApprovedVendor(req.user.id, req.user.role);
-    if (error) return res.status(error.status).json({ message: error.message, status: error.vendorStatus });
-    const vendorId = vendor.id;
+    const { rows: vRows } = await query('SELECT id FROM vendors WHERE user_id=$1', [req.user.id]);
+    if (!vRows[0]) return res.status(403).json({ message: 'Not a vendor' });
+    const vendorId = vRows[0].id;
     const { reason, status } = req.body; // status: requested|approved|rejected|completed
     // Ensure item belongs to vendor
     const { rows: check } = await query('SELECT * FROM order_items WHERE id=$1 AND vendor_id=$2', [req.params.id, vendorId]);
