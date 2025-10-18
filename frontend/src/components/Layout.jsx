@@ -187,10 +187,30 @@ export default function Layout({ children }) {
             {user && <Link className="link" to="/profile" style={{ fontWeight: pathname.startsWith('/profile')?700:undefined, borderBottom: pathname.startsWith('/profile')?'2px solid var(--primary)': '2px solid transparent' }}>Profile</Link>}
           </nav>
           <div className="userbar desktop-only">
-            <label className="toggle">
-              <input type="checkbox" checked={theme==='light'} onChange={(e)=>setTheme(e.target.checked?'light':'dark')} />
-              <span>{theme==='light'?'Light':'Dark'}</span>
-            </label>
+            <button 
+              className="icon-btn" 
+              aria-label="Toggle theme" 
+              onClick={()=>setTheme(theme==='light'?'dark':'light')}
+              title={theme==='light'?'Switch to dark mode':'Switch to light mode'}
+            >
+              {theme==='light' ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/>
+                  <line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              )}
+            </button>
             {user ? (
               <>
                 <span className="pill small">Hi, {displayName}</span>
@@ -198,16 +218,20 @@ export default function Layout({ children }) {
               </>
             ) : (
               <>
-                <Link className="link" to="/login">Login</Link>
-                <Link className="link" to="/register">Register</Link>
+                <Link className="button ghost" to="/login">Login</Link>
+                <Link className="button" to="/register">Register</Link>
               </>
             )}
           </div>
 
           {/* Mobile top bar */}
           <div className="mobile-only mobile-topbar">
-            <button className="icon-btn hamburger" aria-label="Menu" onClick={()=>setMobileMenuOpen(true)}>
-              <span aria-hidden>☰</span>
+            <button className="icon-btn" aria-label="Menu" onClick={()=>setMobileMenuOpen(true)}>
+              <div className="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </button>
             <div className="brand">
               <Link to="/" className="link" style={{ display:'inline-flex', alignItems:'center', gap:8, fontSize:18 }}>
@@ -216,8 +240,29 @@ export default function Layout({ children }) {
               </Link>
             </div>
             <div className="mobile-actions">
-              <button className="icon-btn theme" aria-label="Toggle theme" onClick={()=>setTheme(theme==='light'?'dark':'light')}>
-                <span aria-hidden>{theme==='light'?'🌞':'🌙'}</span>
+              <button 
+                className="icon-btn theme" 
+                aria-label="Toggle theme" 
+                onClick={()=>setTheme(theme==='light'?'dark':'light')}
+                title={theme==='light'?'Switch to dark mode':'Switch to light mode'}
+              >
+                {theme==='light' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                  </svg>
+                )}
               </button>
               <Link className="icon-btn" to={user ? (user.role === 'super_admin' ? '/super-admin' : (user.role === 'admin' ? '/admin' : (user.role === 'admin2' ? '/admin2' : (user.role === 'vendor' ? '/vendor' : '/')))) : '/login'} aria-label="Account">
                 <span aria-hidden>👤</span>
@@ -242,8 +287,19 @@ export default function Layout({ children }) {
                 <LogoWallet size={20} />
                 NeoShop
               </span>
-              <button className="icon-btn" aria-label="Close menu" onClick={()=>setMobileMenuOpen(false)}>✕</button>
+              <button className="icon-btn" aria-label="Close menu" onClick={()=>setMobileMenuOpen(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
+            {user && (
+              <div className="drawer-user-greeting">
+                <h3>Hello, {displayName}!</h3>
+                <p>Welcome back to NeoShop</p>
+              </div>
+            )}
             <nav className="drawer-nav">
               <Link className="link" to="/" onClick={()=>setMobileMenuOpen(false)} style={{ fontWeight: pathname==='/'?700:undefined }}>Home</Link>
               {(user?.role === 'admin' || user?.role === 'super_admin') && (
@@ -266,17 +322,42 @@ export default function Layout({ children }) {
               <Link className="link" to="/cart" onClick={()=>setMobileMenuOpen(false)} style={{ fontWeight: pathname==='/cart'?700:undefined }}>Cart</Link>
             </nav>
             <div className="drawer-actions">
-              <label className="toggle">
-                <input type="checkbox" checked={theme==='light'} onChange={(e)=>setTheme(e.target.checked?'light':'dark')} />
-                <span>{theme==='light'?'Light mode':'Dark mode'}</span>
-              </label>
+              <button 
+                className="button ghost" 
+                onClick={()=>setTheme(theme==='light'?'dark':'light')}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+              >
+                {theme==='light' ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                    <span>Dark mode</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="5"/>
+                      <line x1="12" y1="1" x2="12" y2="3"/>
+                      <line x1="12" y1="21" x2="12" y2="23"/>
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                      <line x1="1" y1="12" x2="3" y2="12"/>
+                      <line x1="21" y1="12" x2="23" y2="12"/>
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <span>Light mode</span>
+                  </>
+                )}
+              </button>
               {user ? (
                 <button className="button ghost" onClick={()=>{setMobileMenuOpen(false); logout();}}>Logout</button>
               ) : (
-                <div className="auth-links">
-                  <Link className="link" to="/login" onClick={()=>setMobileMenuOpen(false)}>Login</Link>
-                  <Link className="link" to="/register" onClick={()=>setMobileMenuOpen(false)}>Register</Link>
-                </div>
+                <>
+                  <Link className="button ghost" to="/login" onClick={()=>setMobileMenuOpen(false)}>Login</Link>
+                  <Link className="button" to="/register" onClick={()=>setMobileMenuOpen(false)}>Register</Link>
+                </>
               )}
             </div>
           </aside>

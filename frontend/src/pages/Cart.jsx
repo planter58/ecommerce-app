@@ -8,8 +8,24 @@ export default function Cart() {
   const total = items.reduce((sum, it) => sum + it.price_cents * it.quantity, 0);
   return (
     <div>
-      <h2>Your Cart</h2>
-      {items.length === 0 && <p>Cart is empty. <Link className="link" to="/">Shop now</Link></p>}
+      <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1.5rem' }}>Your Cart</h2>
+      
+      {items.length === 0 && (
+        <div className="empty-cart-state">
+          <div className="empty-cart-icon">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"/>
+              <circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+          </div>
+          <h3 className="empty-cart-title">Your cart is empty</h3>
+          <p className="empty-cart-text">Looks like you haven't added anything to your cart yet. Start exploring our amazing products!</p>
+          <Link to="/" className="button" style={{ marginTop: '1.5rem', padding: '0.875rem 2rem', fontSize: '1rem' }}>
+            Start Shopping
+          </Link>
+        </div>
+      )}
 
       {items.length > 0 && (
         <div className="cart-list">
