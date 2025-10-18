@@ -242,24 +242,38 @@ export default function ProductDetails() {
           </div>
         </div>
       )}
-      {vw < 1024 && (
-        <div className="mt-24">
-          <h4 style={{ margin: '16px 0 8px 0' }}>Customer Reviews ({reviews.length})</h4>
-          {reviews.length === 0 && <div className="small">No reviews yet.</div>}
-          <div className="stack mt-8" style={{ gap:12 }}>
+      
+      {/* Customer Reviews - Show on both mobile and desktop */}
+      <div className="reviews-section mt-24">
+        <div className="reviews-header">
+          <h4>Customer Reviews</h4>
+          <span className="reviews-count">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+        </div>
+        
+        {reviews.length === 0 ? (
+          <div className="no-reviews">
+            <div className="no-reviews-icon">💬</div>
+            <p className="no-reviews-text">No reviews yet. Be the first to review this product!</p>
+          </div>
+        ) : (
+          <div className="reviews-list">
             {reviews.map(r => (
-              <div key={r.id} className="card" style={{ padding:12 }}>
-                <div style={{ display:'flex', justifyContent:'space-between' }}>
-                  <strong>{r.user_name || 'Customer'}</strong>
-                  <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+              <div key={r.id} className="review-card">
+                <div className="review-header">
+                  <span className="review-author">{r.user_name || 'Customer'}</span>
+                  <div className="review-rating">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <span key={i}>{i < r.rating ? '★' : '☆'}</span>
+                    ))}
+                  </div>
                 </div>
-                {r.comment && <div className="mt-8">{r.comment}</div>}
-                <div className="small mt-8" style={{ color:'#666' }}>{new Date(r.created_at).toLocaleString()}</div>
+                {r.comment && <p className="review-comment">{r.comment}</p>}
+                <div className="review-date">{new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
