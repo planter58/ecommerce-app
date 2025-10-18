@@ -7,10 +7,10 @@ import { listAllReviewsAdmin, deleteReviewAdmin } from '../controllers/reviews.c
 
 const r = Router();
 
-r.get('/vendors', authRequired, requireRole('admin','admin2','super_admin'), listVendors);
-r.put('/vendors/:id/status', authRequired, requireRole('admin','admin2','super_admin'), updateVendorStatus);
+r.get('/vendors', authRequired, requireRole('admin','admin2'), listVendors);
+r.put('/vendors/:id/status', authRequired, requireRole('admin','admin2'), updateVendorStatus);
 // pending vendors count badge
-r.get('/vendors/pending-count', authRequired, requireRole('admin','admin2','super_admin'), pendingVendorCount);
+r.get('/vendors/pending-count', authRequired, requireRole('admin','admin2'), pendingVendorCount);
 // super admin only: promote a user to admin
 r.put('/users/:id/role', authRequired, requireRole('super_admin'), promoteUserRole);
 
