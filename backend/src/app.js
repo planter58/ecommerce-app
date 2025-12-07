@@ -76,6 +76,8 @@ app.get('/', (_req, res) => {
 });
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// Health check without /api prefix for monitoring services
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
@@ -100,16 +102,37 @@ app.use(errorHandler);
 
 export default app;
 
-// Best-effort bootstrap: promote admin@example.com to super_admin if user exists
+// Best-effort bootstrap: create/update super admin users
+import { hashPassword } from './utils/password.js';
 (async () => {
   try {
-    const email = 'admin@example.com';
-    const { rows } = await query('SELECT id, role FROM users WHERE email=$1', [email]);
-    if (rows[0] && rows[0].role !== 'super_admin') {
-      await query('UPDATE users SET role=$2 WHERE id=$1', [rows[0].id, 'super_admin']);
+    // Add/update johnsonmbuguamuhabi@gmail.com as super_admin
+    const email1 = 'johnsonmbuguamuhabi@gmail.com';
+    const password1 = 'Admin@0010';
+    const { rows: rows1 } = await query('SELECT id, role FROM users WHERE email=$1', [email1]);
+    if (rows1[0]) {
+      // User exists, update password and role
+      const hash = await hashPassword(password1);
+      await query('UPDATE users SET password_hash=$1, role=$2, updated_at=NOW() WHERE id=$3', 
+        [hash, 'super_admin', rows1[0].id]);
+      console.log('Updated johnsonmbuguamuhabi@gmail.com to super_admin');
+    } else {
+      // Create new user
+      const hash = await hashPassword(password1);
+      await query('INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4)', 
+        [email1, hash, 'Super Admin', 'super_admin']);
+      console.log('Created super_admin: johnsonmbuguamuhabi@gmail.com');
+    }
+
+    // Keep existing admin@example.com promotion logic
+    const email2 = 'admin@example.com';
+    const { rows: rows2 } = await query('SELECT id, role FROM users WHERE email=$1', [email2]);
+    if (rows2[0] && rows2[0].role !== 'super_admin') {
+      await query('UPDATE users SET role=$2 WHERE id=$1', [rows2[0].id, 'super_admin']);
       console.log('Promoted admin@example.com to super_admin');
     }
   } catch (e) {
     // ignore bootstrap errors
+    console.error('Bootstrap error:', e.message);
   }
 })();

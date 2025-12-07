@@ -8,7 +8,8 @@
     "db:init": "node -e \"import('./src/config/db.js').then(async m=>{await m.execSqlFile('sql/schema.sql'); await m.execSqlFile('sql/seed.sql'); console.log('DB initialized'); process.exit(0);})\"",
     "seed:catalog": "node src/scripts/seed_catalog.js",
     "seed:cleanup": "node src/scripts/cleanup_seed_catalog.js",
-    "migrate": "node src/scripts/migrate.js"
+    "migrate": "node src/scripts/migrate.js",
+    "add:superadmin": "node src/scripts/add_super_admin.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
