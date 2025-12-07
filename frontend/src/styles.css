@@ -384,8 +384,8 @@ body {
 }
 
 /* Header badge */
-.badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 8px;border-radius:999px;background:linear-gradient(180deg, var(--primary), var(--primary-600));color:#fff;font-weight:700;font-size:.8rem;box-shadow:0 6px 16px rgba(2,6,23,.35);}
-[data-theme="light"] .badge{color:#fff;}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 8px;border-radius:999px;background:linear-gradient(180deg, var(--primary), var(--primary-hover));color:#fff;font-weight:700;font-size:.8rem;box-shadow:0 6px 16px rgba(2,6,23,.35);}
+[data-theme="light"] .badge{background:#fff;color:var(--primary);border:1.5px solid var(--primary);box-shadow:0 2px 8px rgba(99,102,241,.25);}
 .cart-link{display:inline-flex;align-items:center;gap:8px}
 
 /* Search & filters */

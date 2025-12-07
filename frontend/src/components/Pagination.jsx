@@ -8,30 +8,29 @@ export default function Pagination({ page, total, limit, onPageChange }) {
   const go = (next) => {
     const clamped = Math.min(pages, Math.max(1, next));
     if (clamped !== page) {
-      try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
+      // Let the parent component handle scroll behavior
       onPageChange?.(clamped);
     }
   };
 
-  const debounceEvent = (e) => {
+  const handleClick = (e, newPage) => {
     e.preventDefault();
+    e.stopPropagation();
     const now = Date.now();
-    if (now - lastFireRef.current < 200) return false;
+    if (now - lastFireRef.current < 300) return;
     lastFireRef.current = now;
-    return true;
+    if (newPage >= 1 && newPage <= pages && newPage !== page) {
+      go(newPage);
+    }
   };
 
-  const onFirst = (e) => { if (!debounceEvent(e)) return; if (canPrev) go(1); };
-  const onPrev  = (e) => { if (!debounceEvent(e)) return; if (canPrev) go(page - 1); };
-  const onNext  = (e) => { if (!debounceEvent(e)) return; if (canNext) go(page + 1); };
   return (
-    <div className="pagination" style={{ display:'flex', alignItems:'center', gap:12 }}>
+    <div className="pagination" style={{ display:'flex', alignItems:'center', gap:12, marginTop:24, marginBottom:24, padding:'8px 0' }}>
       <button
         type="button"
         className="button ghost"
-        style={{ minWidth:44, minHeight:44, padding:'12px 16px', fontSize:16, borderRadius:12, touchAction:'manipulation' }}
-        onPointerUp={onFirst}
-        onClick={onFirst}
+        style={{ minWidth:44, minHeight:44, padding:'12px 16px', fontSize:16, borderRadius:12, touchAction:'manipulation', cursor: canPrev ? 'pointer' : 'not-allowed' }}
+        onClick={(e) => handleClick(e, 1)}
         disabled={!canPrev}
         aria-disabled={!canPrev}
         aria-label="First page"
@@ -41,9 +40,8 @@ export default function Pagination({ page, total, limit, onPageChange }) {
       <button
         type="button"
         className="button ghost"
-        style={{ minWidth:44, minHeight:44, padding:'12px 16px', fontSize:16, borderRadius:12, touchAction:'manipulation' }}
-        onPointerUp={onPrev}
-        onClick={onPrev}
+        style={{ minWidth:44, minHeight:44, padding:'12px 16px', fontSize:16, borderRadius:12, touchAction:'manipulation', cursor: canPrev ? 'pointer' : 'not-allowed' }}
+        onClick={(e) => handleClick(e, page - 1)}
         disabled={!canPrev}
         aria-disabled={!canPrev}
         aria-label="Previous page"
@@ -54,9 +52,8 @@ export default function Pagination({ page, total, limit, onPageChange }) {
       <button
         type="button"
         className="button ghost"
-        style={{ minWidth:44, minHeight:44, padding:'12px 16px', fontSize:16, borderRadius:12, touchAction:'manipulation' }}
-        onPointerUp={onNext}
-        onClick={onNext}
+        style={{ minWidth:44, minHeight:44, padding:'12px 16px', fontSize:16, borderRadius:12, touchAction:'manipulation', cursor: canNext ? 'pointer' : 'not-allowed' }}
+        onClick={(e) => handleClick(e, page + 1)}
         disabled={!canNext}
         aria-disabled={!canNext}
         aria-label="Next page"

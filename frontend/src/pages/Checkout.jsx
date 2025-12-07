@@ -5,7 +5,9 @@ import { createOrder } from '../api/orders';
 import { createPaymentIntent, initiateMpesaStk } from '../api/payments';
 import { useNavigate } from 'react-router-dom';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Only load Stripe if API key is provided
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 function CheckoutForm() {
   const stripe = useStripe();
