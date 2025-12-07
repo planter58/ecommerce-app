@@ -13,12 +13,21 @@ function ProductCard({ product, index = 0 }) {
     loading: index < 8 ? 'eager' : 'lazy',
     fetchPriority: index < 8 ? 'high' : 'auto'
   }), [index]);
+  
+  const handleClick = () => {
+    try {
+      // Signal to Home page that it should restore scroll position when user comes back
+      sessionStorage.setItem('restoreHomeScroll', 'true');
+    } catch {}
+  };
+  
   return (
     <div className="card" style={{ position:'relative' }}>
       <Link
         to={`/product/${product.id}`}
         className="link"
         style={{ textDecoration: 'none' }}
+        onClick={handleClick}
       >
         <div
           style={{

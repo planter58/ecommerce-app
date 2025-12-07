@@ -161,15 +161,42 @@ export default function Home() {
     return () => { isMounted = false; };
   }, [params, isFeaturedMode, reloadTag]);
 
-  // Always reset scroll to top when changing page, query, or category
+  // Scroll to top when changing page, query, or category, but restore saved position if coming back from product details
   useLayoutEffect(() => {
     try {
-      // Use instant scroll to avoid white flashes on some devices
-      window.scrollTo(0, 0);
+      const savedPosition = sessionStorage.getItem('homeScrollPosition');
+      const shouldRestore = sessionStorage.getItem('restoreHomeScroll');
+      
+      if (shouldRestore === 'true' && savedPosition) {
+        // Restore scroll position when returning from product details
+        const position = parseInt(savedPosition, 10);
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          window.scrollTo(0, position);
+        });
+        sessionStorage.removeItem('restoreHomeScroll');
+      } else {
+        // Normal navigation (pagination, search, category): scroll to top
+        window.scrollTo(0, 0);
+        // Clear any pending restore flag
+        sessionStorage.removeItem('restoreHomeScroll');
+      }
     } catch {
       // no-op
     }
   }, [params.page, params.q, params.category]);
+
+  // Save scroll position for potential restoration
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      try {
+        sessionStorage.setItem('homeScrollPosition', String(window.scrollY || 0));
+      } catch {}
+    };
+    
+    window.addEventListener('scroll', saveScrollPosition);
+    return () => window.removeEventListener('scroll', saveScrollPosition);
+  }, []);
 
   // After initial paint, prefetch remainder page 2 (featured mode, page 1 only) during idle time
   useEffect(() => {

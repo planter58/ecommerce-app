@@ -33,8 +33,9 @@ export async function getMyVendor(req, res, next) {
     const { rows } = await query('SELECT * FROM vendors WHERE user_id=$1', [req.user.id]);
     if (!rows[0]) return res.status(404).json({ message: 'Not a vendor' });
     const v = rows[0];
-    // Allow access if vendor is approved OR if user is admin/super_admin
-    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    // Allow access if vendor is approved OR if user is any type of admin
+    const role = String(req.user.role || '').toLowerCase();
+    const isAdmin = role === 'admin' || role === 'admin1' || role === 'admin2' || role === 'super_admin' || role === 'administrator';
     if (v.status && v.status !== 'approved' && !isAdmin) {
       const msg = v.status === 'suspended'
         ? 'Your vendor account is suspended. Request access from the Admin.'
