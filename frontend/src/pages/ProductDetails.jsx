@@ -60,34 +60,8 @@ export default function ProductDetails() {
   const topGridCols = vw >= 1024 ? '1fr' : '1fr';
   const similarCols = vw >= 1024 ? 4 : 2; // phone/tablet: 2 per row, desktop: 4 per row
   
-  const handleBack = () => {
-    // Set flag to restore scroll position when returning to home
-    try {
-      sessionStorage.setItem('restoreHomeScroll', 'true');
-    } catch {}
-    navigate(-1);
-  };
-  
   return (
     <div className="product" style={vw >= 1024 ? { display: 'block' } : undefined}>
-      {/* Back button */}
-      <button 
-        type="button" 
-        className="button ghost" 
-        onClick={handleBack}
-        style={{ 
-          marginBottom: 16, 
-          display: 'inline-flex', 
-          alignItems: 'center', 
-          gap: 6,
-          padding: '8px 12px',
-          fontSize: 14
-        }}
-        aria-label="Go back"
-      >
-        <span style={{ fontSize: 18 }}>←</span>
-        <span>Back</span>
-      </button>
       {/* Desktop: single full-width card (media + details in two-column layout). Mobile: current stacked cards with thumbs on right. */}
       {vw >= 1024 ? (
         <div className="card" style={{ border:'1px solid rgba(0,0,0,0.06)', borderRadius:10, padding:16 }}>
