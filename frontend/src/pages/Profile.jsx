@@ -9,13 +9,21 @@ const AVATAR_OPTIONS = [
   'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie',
   'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver',
   'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack'
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Kofi',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Amara',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Kwame',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Zuri',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jabari',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Nia',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Tendai',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aisha'
 ];
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [profile, setProfile] = useState({ name:'', phone:'', location:'', street_address:'', delivery_preference:'', bio:'', avatar_url:'', extras:'' });
+  const [profile, setProfile] = useState({ name:'', phone:'', location:'', street_address:'', delivery_preference:'', bio:'', avatar_url:'' });
   const [pw, setPw] = useState({ current_password:'', new_password:'', show:false });
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
@@ -30,8 +38,7 @@ export default function Profile() {
           street_address: data.street_address || '',
           delivery_preference: data.delivery_preference || '',
           bio: data.bio || '',
-          avatar_url: data.avatar_url || '',
-          extras: data.extras || ''
+          avatar_url: data.avatar_url || ''
         });
       } catch (e) {
         setError(e?.response?.data?.message || 'Failed to load profile');
@@ -53,8 +60,7 @@ export default function Profile() {
         street_address: data.street_address || '',
         delivery_preference: data.delivery_preference || '',
         bio: data.bio || '',
-        avatar_url: data.avatar_url || '',
-        extras: data.extras || ''
+        avatar_url: data.avatar_url || ''
       });
       alert('Profile updated');
     } catch (e) {
@@ -99,11 +105,19 @@ export default function Profile() {
               )}
               <button 
                 type="button" 
-                className="button ghost" 
+                className="button" 
                 onClick={()=>setShowAvatarPicker(!showAvatarPicker)}
-                style={{ fontSize:14 }}
+                style={{ 
+                  fontSize: 14,
+                  background: 'var(--avatar-btn-bg)',
+                  color: 'var(--avatar-btn-color)',
+                  border: '2px solid var(--avatar-btn-border)',
+                  fontWeight: 600,
+                  padding: '10px 20px',
+                  transition: 'all 0.2s ease'
+                }}
               >
-                {showAvatarPicker ? 'Hide Avatars' : 'Choose Avatar'}
+                {showAvatarPicker ? 'Hide Avatars' : '🎨 Choose Avatar'}
               </button>
               <input 
                 className="input" 
@@ -158,20 +172,6 @@ export default function Profile() {
         </form>
       </section>
 
-      <section className="card" style={{ padding:16, marginTop:12 }}>
-        <h3 style={{ marginTop:0 }}>Extras</h3>
-        <div className="small muted" style={{ marginBottom:8 }}>Add any additional info you want us to know (e.g., preferred contact time, delivery notes, etc.).</div>
-        <textarea 
-          className="input" 
-          placeholder="Enter any extra information here..." 
-          value={profile.extras} 
-          onChange={e=>setProfile(p=>({ ...p, extras:e.target.value }))} 
-          style={{ width:'100%', minHeight:80 }}
-        />
-        <div style={{ display:'flex', justifyContent:'flex-end', marginTop:8 }}>
-          <button className="button" onClick={save}>Save Extras</button>
-        </div>
-      </section>
     </div>
   );
 }

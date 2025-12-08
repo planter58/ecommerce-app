@@ -20,7 +20,6 @@ async function run() {
       path.join('sql', '20250814_featured_products.sql'),
       path.join('sql', '20250817_ribbon_items.sql'),
       path.join('sql', '20250819_add_ribbon_mobile_bg_fields.sql'),
-      path.join('sql', '20250820_user_extras.sql'),
     ];
     for (const f of files) {
       const abs = path.isAbsolute(f) ? f : path.join(__dirname, '..', f);
