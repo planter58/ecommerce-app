@@ -47,18 +47,14 @@ export default function CategoryFilter({ onChange }) {
     .slice(0, additionalCount);
   return (
     <div>
-      {/* Desktop select with limited height (shows 10 items, rest scrollable) */}
+      {/* Desktop select - proper dropdown */}
       <div className="category-select">
         <select
           className="select"
           value={selected}
           onChange={(e)=>{setSelected(e.target.value); onChange?.(e.target.value);}}
-          size={Math.min(categories.length + 1, 10)}
           style={{ 
-            width: '100%',
-            minHeight: '40px',
-            maxHeight: '300px',
-            overflowY: 'auto',
+            width: viewportWidth >= 768 ? '300px' : '100%',
             display: viewportWidth >= 768 ? 'block' : 'none'
           }}
         >
@@ -67,7 +63,7 @@ export default function CategoryFilter({ onChange }) {
         </select>
       </div>
       {/* Mobile chips (curated only) + Desktop chips (curated + additional) */}
-      <div className="category-chips" role="tablist" aria-label="Categories" style={{ maxWidth: '75vw', overflowX: 'auto', flexWrap: viewportWidth < 768 ? 'wrap' : 'nowrap' }}>
+      <div className="category-chips" role="tablist" aria-label="Categories" style={{ maxWidth: viewportWidth >= 768 ? '75vw' : '100%', overflowX: viewportWidth >= 768 ? 'auto' : 'visible', flexWrap: viewportWidth < 768 ? 'nowrap' : 'nowrap' }}>
         <button
           role="tab"
           aria-selected={selected === ''}

@@ -666,21 +666,29 @@ body {
 /* Category Filters */
 .category-select {
   margin: 0.75rem 0;
+  position: relative;
 }
 
 .home-container .category-select {
   margin: 0.5rem 0;
 }
 
+.category-select .select {
+  max-width: 300px;
+  width: auto;
+  min-width: 200px;
+}
+
 .category-chips {
   display: flex;
   gap: 0.625rem;
-  overflow-x: auto;
+  overflow-x: visible;
   padding: 0.5rem 0;
   margin: 0.75rem 0;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
+  flex-wrap: nowrap;
 }
 
 @media (min-width: 768px) {
